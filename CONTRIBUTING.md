@@ -76,6 +76,24 @@ One logical change per PR. Behavior changes should come with a test that would
 have caught the regression. If you change the public API, update the relevant
 guide under `docs/` and the package README in the same PR.
 
+## Releases
+
+Published packages (`@stillsmith/annotate`, `@stillsmith/capture`,
+`@stillsmith/tour`) version together via
+[Changesets](https://github.com/changesets/changesets).
+
+For any PR that should ship to npm, add a changeset with the code change:
+
+```bash
+pnpm changeset
+```
+
+Commit the generated file under `.changeset/`. After merge to `main`, CI opens
+a **Version Packages** PR; merging that publishes. You need an `NPM_TOKEN`
+repository secret for publish to succeed.
+
+Docs-only and internal tooling changes do not need a changeset.
+
 ## What ships where
 
 | Path | What |

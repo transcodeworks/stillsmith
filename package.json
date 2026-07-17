@@ -13,10 +13,14 @@
     "format": "biome format --write .",
     "check": "biome check .",
     "check:fix": "biome check --write .",
-    "docs": "pnpm --filter stillsmith-docs"
+    "docs": "pnpm --filter stillsmith-docs",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.5.2"
+    "@biomejs/biome": "2.5.2",
+    "@changesets/cli": "^2.31.1"
   },
   "devEngines": {
     "packageManager": {

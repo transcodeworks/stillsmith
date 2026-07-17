@@ -17,8 +17,8 @@ matter how good the code is.
 ## Getting set up
 
 You need Node and pnpm. The pnpm version is pinned in `package.json` under
-`devEngines.packageManager`, so with corepack enabled you get the right one
-automatically. For Node, use the version CI uses (see
+`packageManager`, so with corepack enabled you get the right one automatically.
+For Node, use the version CI uses (see
 [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)).
 
 ```bash

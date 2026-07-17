@@ -1,0 +1,75 @@
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push makes an in-flight run pointless. Don't pay for it.
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # pnpm/action-setup reads the `packageManager` field, and this repo doesn't
+      # have one: it pins the toolchain with `devEngines.packageManager`, which is
+      # pnpm's own mechanism and the successor to the Corepack field. The action
+      # doesn't understand it — that mismatch is what failed CI with "No pnpm
+      # version is specified".
+      #
+      # Hand it the version rather than hardcoding one here, so `devEngines` stays
+      # the single source of truth and the two cannot drift apart.
+      - name: Resolve pnpm version from devEngines
+        id: pnpm
+        run: |
+          echo "version=$(jq -re .devEngines.packageManager.version package.json)" >> "$GITHUB_OUTPUT"
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ steps.pnpm.outputs.version }}
+
+      # Must come after pnpm: `cache: pnpm` shells out to pnpm to locate the store.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Shot assets are committed under docs/src/assets/shots/, so a plain Astro
+      # build is enough — no Playwright / capture step on this path.
+      - run: pnpm --filter stillsmith-docs build
+
+      - name: Upload Pages artifact
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: docs/dist
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

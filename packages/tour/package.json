@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "Guided onboarding tours, defined as code in your repo. The production runtime for tours authored with stillsmith.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transcodeworks/stillsmith.git",
+    "directory": "packages/tour"
+  },
+  "homepage": "https://transcodeworks.github.io/stillsmith",
+  "bugs": {
+    "url": "https://github.com/transcodeworks/stillsmith/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {

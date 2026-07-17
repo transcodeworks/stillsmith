@@ -11,6 +11,8 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  # Required for npm trusted publishing (OIDC). No long-lived NPM_TOKEN.
+  id-token: write
 
 jobs:
   release:
@@ -35,6 +37,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          # Needed so the npm CLI targets the public registry for OIDC publish.
           registry-url: https://registry.npmjs.org
 
       - run: pnpm install --frozen-lockfile
@@ -51,4 +54,7 @@ jobs:
           version: pnpm version-packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # Empty on purpose: changesets/action otherwise writes a token into
+          # ~/.npmrc, which blocks OIDC trusted publishing. See
+          # https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
+          NPM_TOKEN: ""

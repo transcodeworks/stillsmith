@@ -1,0 +1,18 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "fixed": [["@stillsmith/annotate", "@stillsmith/capture", "@stillsmith/tour"]],
+  "linked": [],
+  "access": "public",
+  "baseBranch": "main",
+  "updateInternalDependencies": "patch",
+  "ignore": [
+    "stillsmith-docs",
+    "stillsmith-example-rock-app",
+    "stillsmith-fixture-app",
+    "stillsmith-fixture-tour-app",
+    "stillsmith-fixture-no-vite",
+    "stillsmith-fixture-next-shaped"
+  ]
+}

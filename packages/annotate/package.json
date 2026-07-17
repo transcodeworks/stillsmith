@@ -3,6 +3,15 @@
   "version": "0.1.0",
   "description": "stillsmith's annotation core: the Target/anchor model, the DOM overlay drawer, and target suggestion. Shared by @stillsmith/capture and @stillsmith/tour (runtime).",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transcodeworks/stillsmith.git",
+    "directory": "packages/annotate"
+  },
+  "homepage": "https://transcodeworks.github.io/stillsmith",
+  "bugs": {
+    "url": "https://github.com/transcodeworks/stillsmith/issues"
+  },
   "type": "module",
   "sideEffects": false,
   "exports": {

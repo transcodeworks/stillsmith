@@ -3,10 +3,19 @@ import starlightLlmTools from "@wave-rf/starlight-llm-tools";
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
+  site: "https://transcodeworks.github.io",
+  base: "/stillsmith",
   integrations: [
     starlight({
       title: "stillsmith",
       description: "Screenshots of your product, taken from your real components.",
+      social: [
+        {
+          icon: "github",
+          label: "GitHub",
+          href: "https://github.com/transcodeworks/stillsmith",
+        },
+      ],
       tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
       sidebar: [
         {

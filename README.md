@@ -13,7 +13,7 @@ deterministic, and impossible to leave stale.
 [![Vite](https://img.shields.io/badge/Vite-plugin-646cff.svg)](https://vitejs.dev/)
 [![Playwright](https://img.shields.io/badge/Playwright-capture-2ead33.svg)](https://playwright.dev/)
 
-[Getting started](#getting-started) · [Documentation](#documentation) · [Why stillsmith](#why-stillsmith) · [Contributing](./CONTRIBUTING.md)
+[Getting started](#getting-started) · [Documentation](https://transcodeworks.github.io/stillsmith) · [Why stillsmith](#why-stillsmith) · [Contributing](./CONTRIBUTING.md)
 
 </div>
 
@@ -65,7 +65,7 @@ stillsmith capture
 - **Guided tours, same bet.** [`@stillsmith/tour`](./packages/tour) runs onboarding
   tours from type-checked `.tour.ts` files in your repo, anchored on the same
   `data-shot` selectors your screenshots use — authored visually in `stillsmith dev`
-  against your running app. See the [tours guide](./docs/src/content/docs/guides/tours.mdx)
+  against your running app. See the [tours guide](https://transcodeworks.github.io/stillsmith/guides/tours/)
   and [DESIGN-TOURS.md](./DESIGN-TOURS.md).
 
 ## Getting started
@@ -89,19 +89,21 @@ scenes, configuring presets and targets, and the full CLI.
 
 ## Documentation
 
-The documentation site lives in [`docs/`](./docs) (built with
-[Starlight](https://starlight.astro.build/)). The guides:
+Docs are published at
+**[transcodeworks.github.io/stillsmith](https://transcodeworks.github.io/stillsmith)**
+(source in [`docs/`](./docs), built with [Starlight](https://starlight.astro.build/)).
+The guides:
 
 | Guide | What it covers |
 | --- | --- |
-| [What stillsmith is](./docs/src/content/docs/start/what-stillsmith-is.mdx) | The idea, and when to reach for it. |
-| [Getting started](./docs/src/content/docs/start/getting-started.mdx) | Install, first scene, first capture. |
-| [Scenes](./docs/src/content/docs/guides/scenes.mdx) | Declaring scenes and shots. |
-| [Annotations](./docs/src/content/docs/guides/annotations.mdx) | The five kinds, targets, and `offset`. |
-| [The authoring GUI](./docs/src/content/docs/guides/authoring.mdx) | Placing and dragging annotations visually. |
-| [Configuration](./docs/src/content/docs/guides/configuration.mdx) | Presets, targets, and the one-file config. |
-| [MCP](./docs/src/content/docs/guides/mcp.mdx) | Driving stillsmith from an agent. |
-| [CLI reference](./docs/src/content/docs/reference/cli.mdx) | Every command and flag. |
+| [What stillsmith is](https://transcodeworks.github.io/stillsmith/start/what-stillsmith-is/) | The idea, and when to reach for it. |
+| [Getting started](https://transcodeworks.github.io/stillsmith/start/getting-started/) | Install, first scene, first capture. |
+| [Scenes](https://transcodeworks.github.io/stillsmith/guides/scenes/) | Declaring scenes and shots. |
+| [Annotations](https://transcodeworks.github.io/stillsmith/guides/annotations/) | The five kinds, targets, and `offset`. |
+| [The authoring GUI](https://transcodeworks.github.io/stillsmith/guides/authoring/) | Placing and dragging annotations visually. |
+| [Configuration](https://transcodeworks.github.io/stillsmith/guides/configuration/) | Presets, targets, and the one-file config. |
+| [MCP](https://transcodeworks.github.io/stillsmith/guides/mcp/) | Driving stillsmith from an agent. |
+| [CLI reference](https://transcodeworks.github.io/stillsmith/reference/cli/) | Every command and flag. |
 
 For the architecture and roadmap, see **[DESIGN.md](./DESIGN.md)**.
 

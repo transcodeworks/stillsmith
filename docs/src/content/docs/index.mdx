@@ -1,0 +1,64 @@
+---
+title: stillsmith
+description: Screenshots of your product, taken from your real components.
+template: splash
+hero:
+  tagline: Screenshots of your product, taken from your real components. Declare scenes next to the code they render; stillsmith drives a browser and writes the PNGs.
+  actions:
+    - text: Getting started
+      link: /start/getting-started/
+      icon: right-arrow
+    - text: What stillsmith is
+      link: /start/what-stillsmith-is/
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Hand-composed mockups drift from the product, and manually-taken screenshots go
+stale as soon as a component changes.
+
+A **scene** renders the real component over fixture data. When a prop changes, the
+scene stops compiling instead of quietly rendering something out of date.
+
+```tsx
+// src/components/rock-shelf.scene.tsx
+import type { Scene, Shot } from "@stillsmith/capture/react";
+import { RockShelf } from "@/components/RockShelf";
+import { ROCKS } from "@/data/rocks";
+
+export default {
+  render: () => <RockShelf rocks={ROCKS} selectedId="obsidian" />,
+} satisfies Scene;
+
+export const Default: Shot = {};
+```
+
+```bash
+stillsmith capture
+```
+
+<CardGrid>
+  <Card title="Annotations, in code" icon="pencil">
+    Outlines, highlights, arrows, callouts and pins, resolved by selector, so one
+    annotation adapts across every preset instead of being pinned to coordinates.
+  </Card>
+  <Card title="A visual editor" icon="laptop">
+    `stillsmith dev` opens an editor that draws with the same engine as the capture
+    and writes TypeScript back into your scene file.
+  </Card>
+  <Card title="Built for agents" icon="rocket">
+    An MCP server that lets an agent see the rendered scene and preview an
+    annotation before it commits to one.
+  </Card>
+  <Card title="Deterministic" icon="approve-check">
+    Fonts are awaited and animations frozen, so re-running produces byte-identical
+    PNGs and CI diffs stay meaningful.
+  </Card>
+</CardGrid>
+
+:::tip[Every screenshot on this site is captured by stillsmith]
+Including the one of stillsmith's own [authoring GUI](/guides/authoring/). If the UI
+changes and nobody re-captures, the docs break in CI rather than going quietly
+stale.
+:::

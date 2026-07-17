@@ -1,0 +1,8 @@
+.card {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  background: #e8f0fe;
+  color: #1a73e8;
+  font-family: system-ui, sans-serif;
+}

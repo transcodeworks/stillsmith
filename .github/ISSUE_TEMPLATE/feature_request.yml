@@ -1,0 +1,29 @@
+name: Feature request
+description: Propose a new capability or an API change.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Features and API changes start here rather than as a PR — see
+        [CONTRIBUTING.md](https://github.com/transcodeworks/stillsmith/blob/main/CONTRIBUTING.md).
+        Describe the problem
+        first; the API sketch is optional.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you trying to do that stillsmith doesn't support today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: If you have an API or behavior in mind, sketch it here.
+      render: tsx
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you've tried, or other shapes this could take.

@@ -1,0 +1,126 @@
+---
+title: Next.js and other hosts
+description: stillsmith without a Vite config — synthesis, shims, and tours against your running app.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+stillsmith compiles your scenes with Vite. That does **not** mean your project has
+to use Vite: when there's no `vite.config` to merge, stillsmith synthesizes one
+from the signals every project already has. A Next.js, CRA, or plain-webpack
+app works without adding any build configuration.
+
+## The ladder
+
+At startup, stillsmith resolves how scenes get compiled, in order:
+
+1. **`vite:` points at a config** → load it and merge into it.
+2. **A `vite.config.*` is found** (walking up from your stillsmith config) → same.
+3. **Neither, or `vite: false`** → *synthesize* a config from:
+   - **tsconfig `paths`** — your `@/*` aliases, `extends` chains included
+   - **`postcss.config.*`** — Tailwind (v3, and v4 via `@tailwindcss/postcss`)
+     applies with no plugins, because Vite picks PostCSS up automatically
+   - **`.env` files** — public variables (`NEXT_PUBLIC_*`, `REACT_APP_*`)
+     become defines, so `process.env.NEXT_PUBLIC_API_URL` works in the browser
+
+Whichever tier runs, every command says so — synthesis is never silent:
+
+```
+stillsmith: host next — synthesized config (aliases: tsconfig paths; shims: next/image, …)
+```
+
+`vite: false` forces synthesis even when a `vite.config` exists — useful in a
+monorepo where the config stillsmith would find belongs to a different app.
+
+## Shims
+
+Components import modules that only mean something inside their
+meta-framework's runtime — `next/image` expects Next's optimizer, `next/font`
+expects a compile-time transform. stillsmith ships **shims**: faithful-for-a-
+screenshot stand-ins, applied automatically when the host is detected. A Next
+project gets:
+
+| Module | What the shim does |
+| --- | --- |
+| `next/image` | A plain `<img>`; handles static-import objects and `fill`. Original asset pixels — which is what a screenshot wants anyway. |
+| `next/link` | An `<a>`, object `href`s stringified. |
+| `next/navigation`, `next/router` | Inert router; `usePathname` and friends read a seedable route state (defaults to `/`). |
+| `next/font/google` | Loads the real font from Google Fonts — any family, not a fixed list — and capture waits for it before the shutter. |
+| `next/head`, `next/dynamic`, `next/script` | Portal into `document.head`; `React.lazy` + `Suspense`; a plain `<script>`. |
+| `server-only`, `next/headers`, `next/cache` | **Throw on import**, with a recipe. |
+
+That last row is deliberate: scenes are client renders, and stillsmith does not
+emulate a server-component runtime. A server-only component fails loudly —
+extract the presentational child and shoot that.
+
+Override or disable any shim per-specifier, or all of them:
+
+```tsx
+shims: {
+  "next/font/google": "./my-font-shim.ts",  // project-local replacement
+  "next/script": false,                     // resolve the real module instead
+},
+// or: shims: false
+```
+
+## Recreate what your layout provides
+
+Scenes render your component — not your `app/layout.tsx`. Anything the layout
+contributes (font variables, theme classes, providers) has to come from the
+config's `wrapper`, same as any other provider:
+
+```tsx title="stillsmith.config.tsx"
+import { defineConfig } from "@stillsmith/capture/react";
+import { Geist, Geist_Mono } from "next/font/google";
+import "@/app/globals.css";
+
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+
+export default defineConfig({
+  scenes: ["src/**/*.scene.tsx"],
+  wrapper: ({ children }) => (
+    <div className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      {children}
+    </div>
+  ),
+  // …presets, targets
+});
+```
+
+This mirrors the `className` your layout puts on `<body>`, so Tailwind theme
+tokens like `font-sans` resolve to the same fonts your app ships.
+
+## Tours against your running app
+
+Guided-tour authoring drives your *real app*, and that never needed your build
+at all — only a URL. Point `appUrl` at any running dev server:
+
+```tsx
+appUrl: "http://localhost:3000",   // e.g. `next dev`
+```
+
+Tour preview and authoring open that origin directly. Scene capture still runs
+through stillsmith's own server; `appUrl` only affects app pages.
+
+<Aside type="note" title="Live preview in the GUI is same-origin only">
+With a cross-origin `appUrl`, the authoring GUI can't draw live step previews
+into the app's frame — the browser forbids it. The GUI tells you when this is
+the case; use the MCP `preview_step` tool, which renders through Playwright and
+doesn't care about origins.
+</Aside>
+
+## Limitations
+
+Synthesis reproduces your build's *configuration*, not its *compiler plugins*:
+
+- **Compiler-transform CSS-in-JS** — vanilla-extract's webpack plugin,
+  styled-components' SWC transform — doesn't apply. If a component depends on
+  one, give stillsmith a small dedicated `vite.config` with the Vite equivalent
+  of that plugin (tier 1 is always available).
+- **`next/font/local`** resolves its `src` with a compile-time transform a
+  runtime shim can't replicate; it falls back to the system stack and says so.
+  Override it via `shims:` if the exact face matters.
+- **Monorepo note:** `create-next-app` writes its own `pnpm-workspace.yaml`
+  into the new app. Inside an existing pnpm workspace, delete it — a nested
+  workspace root confuses pnpm, stillsmith aside.

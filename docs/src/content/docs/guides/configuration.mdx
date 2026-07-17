@@ -1,0 +1,168 @@
+---
+title: Configuration
+description: One file for presets, targets, and your providers.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+```tsx title="stillsmith.config.tsx"
+import { defineConfig } from "@stillsmith/capture/react";
+import { QueryClientProvider } from "@tanstack/react-query";
+import "@/theme.css";
+
+export default defineConfig({
+  scenes: ["src/**/*.scene.tsx"],
+  vite: "./vite.config.ts",   // auto-detected if omitted
+
+  presets: {
+    docs:  { width: 1280, height: 800,  dpr: 2, colorScheme: "dark" },
+    thumb: { width: 1280, height: 800,  dpr: 1, colorScheme: "light" },
+    hero:  { width: 2560, height: 1440, dpr: 2, colorScheme: "dark" },
+  },
+
+  targets: {
+    docs:      { outDir: "docs/public/images", flat: true, presets: ["docs"], tags: ["docs"] },
+    marketing: { outDir: "screenshots", presets: ["hero", "thumb"] },
+  },
+
+  // Wraps every scene. Only ever called in the browser.
+  wrapper: ({ children }) => (
+    <QueryClientProvider client={seededClient}>{children}</QueryClientProvider>
+  ),
+
+  applyColorScheme: (scheme) =>
+    document.documentElement.classList.toggle("dark", scheme === "dark"),
+});
+```
+
+## Presets and targets
+
+A **preset** is a browser configuration: size, pixel density, colour scheme.
+
+A **target** is an output profile: where images go, at which presets, for which
+shots. `flat: true` writes `<stem>.jpg` directly into `outDir`; otherwise images
+are grouped into per-preset subdirectories.
+
+Targets filter by tag, which is what stops you from duplicating scene
+declarations. Tag a shot `docs` and the `docs` target picks it up while the
+marketing target ignores it. One scene set, several output profiles:
+
+```bash
+stillsmith capture --target docs
+```
+
+## Formats
+
+Images are written as **jpeg** by default. `format` — set on a target, or at the
+top level as the default for every target — switches the encoding:
+
+```tsx
+format: "webp",      // config-level default: jpeg | png | webp
+targets: {
+  docs:      { outDir: "docs/images", format: "webp" },
+  marketing: { outDir: "screenshots", format: "png" },  // per-target override
+},
+```
+
+- **`jpeg`** (default) — smallest, no transparency. `quality` defaults to 90.
+- **`png`** — lossless, always. The right choice when every pixel must survive,
+  e.g. visual-regression baselines.
+- **`webp`** — lossless *unless* you set a `quality`, which opts into lossy.
+  Lossless webp is pixel-identical to png at a fraction of the size, which makes
+  it the right format for screenshots committed to a repo — it's what stillsmith's
+  own docs use. Needs [`sharp`](https://sharp.pixelplumbing.com) installed
+  (`pnpm add -D sharp`); png and jpeg come straight from the browser and don't.
+
+`quality` (1–100) sits at either level too, and applies to jpeg and webp; png
+ignores it. The extension follows the format: `.jpg`, `.png`, `.webp`.
+
+## stillsmith merges your Vite config
+
+It doesn't bring its own. Your aliases, plugins and CSS pipeline all apply to
+scenes, which is what lets a scene import a real component and have it work with
+no duplicated build setup.
+
+If your app's config carries plugins that can't run in a headless browser (Tauri,
+route codegen), strip them:
+
+```tsx
+viteOverrides: {
+  plugins: [],   // merged over your app's config
+},
+```
+
+No Vite config at all? stillsmith synthesizes one from your tsconfig paths,
+PostCSS setup, and env files, and ships shims for meta-framework modules like
+`next/image` — see [Next.js & other hosts](/guides/hosts/). `vite: false`
+forces synthesis even when a `vite.config` exists; `appUrl` points tour
+authoring at a separately-running app.
+
+## Providers and theming
+
+`wrapper` wraps every scene: query clients, theme providers, stores, a seeded
+cache. It's only ever called in the browser.
+
+`applyColorScheme` is how a preset's `colorScheme` becomes your app's idea of
+dark mode. stillsmith owns the browser-level setting; you decide what it means:
+
+```tsx
+applyColorScheme: (scheme) =>
+  document.documentElement.classList.toggle("dark", scheme === "dark"),
+```
+
+## How one file serves two runtimes
+
+The config is read in Node, because the CLI needs presets, targets and globs
+before a browser exists, and again in the browser, which needs `wrapper` and
+`applyColorScheme`.
+
+That normally forces two files; it's why Storybook has `main.ts` and `preview.ts`.
+
+stillsmith avoids the split by bundling the config for Node itself, with stylesheets
+and assets resolved to empty stubs and your Vite aliases resolved the way your app
+resolves them. So `import "@/theme.css"` and a JSX `wrapper` are both safe here:
+Node can import them, and only the browser ever calls them.
+
+<Aside type="caution" title="If your config can't run in Node">
+Top-level `window`, say. stillsmith will tell you, and point you at the escape hatch:
+
+```tsx
+// stillsmith.config.tsx
+export default defineConfig({
+  setup: "./stillsmith.setup.tsx",   // the browser-only half lives here instead
+  // …
+});
+```
+
+```tsx
+// stillsmith.setup.tsx
+import { defineSetup } from "@stillsmith/capture/react";
+export default defineSetup({ wrapper, applyColorScheme });
+```
+
+Both forms produce identical captures; the split is available but not required.
+</Aside>
+
+## Determinism
+
+```tsx
+stabilize: {
+  fonts: true,            // await document.fonts.ready before measuring
+  animations: "disable",  // freeze CSS transitions and animations
+  delay: 0,               // global settle time, ms
+},
+```
+
+These are the defaults, and worth leaving alone unless something forces your hand.
+They're what make a re-capture byte-identical, which keeps a committed screenshot
+directory from dirtying your git diff on every run.
+
+## Frameworks
+
+`@stillsmith/capture` is the framework-neutral core; `@stillsmith/capture/react` is the
+React binding. It types `wrapper` and `Scene` against `ReactNode` and selects the
+React renderer.
+
+React is an optional peer dependency and the core's published types mention no
+framework, so a non-React project can depend on stillsmith without installing React
+or `@types/react`. React is the only renderer that ships today.

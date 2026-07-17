@@ -1,0 +1,79 @@
+---
+title: CLI
+description: Every stillsmith command and flag.
+---
+
+```
+stillsmith init                  scaffold stillsmith.config.tsx and an example scene
+stillsmith dev                   scene browser + annotation authoring GUI
+stillsmith plan [filters]        print what would be captured
+stillsmith capture [filters]     capture and write PNGs
+stillsmith mcp                   stdio MCP server
+stillsmith install               install the Playwright Chromium build
+```
+
+## Filters
+
+Every filter applies to both `plan` and `capture`.
+
+| Flag | Selects |
+| --- | --- |
+| `--target <name>` | Output profile. Default: **every** target. |
+| `--scene <ids>` | Comma-separated scene ids. |
+| `--shot <names>` | Comma-separated shot names. |
+| `--preset <names>` | Comma-separated preset names. |
+| `--tag <tags>` | Comma-separated tags. |
+| `--clean` | Delete the targeted images first. |
+| `--config <path>` | Path to `stillsmith.config.tsx`. |
+
+```bash
+stillsmith capture --target docs
+stillsmith capture --scene rock-shelf --preset docs
+stillsmith plan --tag docs
+```
+
+:::note[Running through a package script?]
+`pnpm run capture -- --shot docs` forwards the `--` separator literally. stillsmith
+ignores it, so filters work either way.
+:::
+
+## Orphaned shots
+
+If a shot isn't picked up by any target, because its presets don't intersect a
+target's or it lacks the tag a target filters on, an unfiltered run says so:
+
+```
+Warning: 1 shot(s) are not captured by any target:
+  rock-shelf/hero
+Their presets don't intersect a target's, or they lack the tag a target filters on.
+```
+
+A shot you wrote and never get is easy to miss, so stillsmith warns rather than
+staying silent.
+
+## Output
+
+Each target's `outDir` gets a `manifest.json`:
+
+```json
+{
+  "images": [
+    {
+      "scene": "rock-shelf",
+      "shot": "docs",
+      "preset": "docs",
+      "path": "rock-shelf-docs.jpg",
+      "width": 1800,
+      "height": 1120,
+      "tags": ["docs"]
+    }
+  ]
+}
+```
+
+`width` and `height` are the real pixel dimensions (viewport × dpr), so a docs
+site can lay out images without measuring them.
+
+There's deliberately no timestamp in it. Targets like `docs` usually write into a
+committed directory, and a `generatedAt` field would dirty your git diff on every
+capture even when no pixel changed.

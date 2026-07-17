@@ -1,0 +1,96 @@
+---
+title: Agents (MCP)
+description: Let an agent see the rendered scene, and check an annotation before it commits to one.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+```bash
+stillsmith mcp                                  # stdio MCP server
+claude mcp add stillsmith -- npx stillsmith mcp    # e.g. with Claude Code
+```
+
+## What stillsmith doesn't give an agent
+
+There are no tools for writing shots.
+
+An agent already edits a `.scene.tsx` perfectly well with its ordinary file tools,
+because it's TypeScript. A `write_shot` tool would duplicate something that already
+works.
+
+What an agent can't do is see the rendered scene, or know what's targetable. Left
+to itself it writes:
+
+```tsx
+target: { selector: ".rock-card__title" }   // guessed
+```
+
+That matches nothing, produces no annotation, and fails quietly, because a missing
+target is only a warning. The tools below exist to close that gap.
+
+## The tools
+
+| Tool | What it gives the agent |
+| --- | --- |
+| `list_scenes` | Scenes, their shots, the configured presets and targets. |
+| `inspect_scene` | Renders the scene and returns selectors that are known to exist, ranked by how well they survive a re-render, with tag, role, text and rect. |
+| `preview` | Renders an unsaved shot passed inline and returns the PNG, so the agent can look at it before writing anything to a file. |
+| `capture` | Runs the real pipeline. |
+| `plan` | Dry run. |
+
+## `inspect_scene`
+
+```json
+{
+  "scene": "rock-inspector",
+  "preset": "docs",
+  "elements": [
+    {
+      "target": { "selector": "[data-shot='polish']" },
+      "quality": "stable",
+      "tag": "button",
+      "text": "Send to the tumbler",
+      "rect": { "x": 32, "y": 470, "w": 236, "h": 38 }
+    },
+    {
+      "target": { "text": "Amethyst Geode" },
+      "quality": "ok",
+      "note": "No hook of its own; matched by text. Add a data-shot attribute for a stable target.",
+      "tag": "h2"
+    }
+  ]
+}
+```
+
+Two elements are never offered the same target. An element with no hook of its own
+falls back to matching on its text rather than borrowing its parent's selector.
+Otherwise an agent aiming at a heading would silently annotate the whole card it
+sits in.
+
+## `preview`
+
+Renders a shot the agent has only proposed; it doesn't have to exist in any file.
+The image comes back as MCP image content, so the agent can look at it:
+
+> Preview of `rock-inspector` at `docs` (640×620). All annotation targets resolved.
+
+When a target doesn't resolve, the response says so rather than handing back a
+blank overlay:
+
+> Preview of `rock-inspector` at `docs`. **1 annotation target(s) DID NOT RESOLVE**
+> and were skipped:
+> - selector ".rock-card__title" matched 0 element(s)
+>
+> Use `inspect_scene` to find selectors that exist.
+
+<Aside type="note" title="Same code path as the real capture">
+`preview` renders through exactly the same code as `stillsmith capture`:
+stabilisation, annotation drawing, screenshot. It isn't an approximation of the
+output, just the output not written to disk.
+</Aside>
+
+## The loop
+
+Propose, render, look, refine, then save with an ordinary file edit. It's the same
+loop the [authoring GUI](/guides/authoring/) gives a human, reached through a
+different interface.

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# A newer push makes an in-flight run pointless. Don't pay for it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # pnpm/action-setup reads the `packageManager` field, and this repo doesn't
+      # have one: it pins the toolchain with `devEngines.packageManager`, which is
+      # pnpm's own mechanism and the successor to the Corepack field. The action
+      # doesn't understand it — that mismatch is what failed CI with "No pnpm
+      # version is specified".
+      #
+      # Hand it the version rather than hardcoding one here, so `devEngines` stays
+      # the single source of truth and the two cannot drift apart.
+      - name: Resolve pnpm version from devEngines
+        id: pnpm
+        run: |
+          echo "version=$(jq -re .devEngines.packageManager.version package.json)" >> "$GITHUB_OUTPUT"
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ steps.pnpm.outputs.version }}
+
+      # Must come after pnpm: `cache: pnpm` shells out to pnpm to locate the store.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # The e2e suite drives the *built* runtime: the Vite plugin serves
+      # dist/react/runtime.js off disk, and annotations are injected from
+      # dist/annotate.global.js. Tests against unbuilt source would not be
+      # testing what ships.
+      - run: pnpm build
+
+      - run: pnpm check
+      - run: pnpm typecheck
+
+      - run: pnpm --filter @stillsmith/capture exec playwright install --with-deps chromium
+
+      - run: pnpm test

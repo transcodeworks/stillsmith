@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "verbatimModuleSyntax": true,
+    "noEmit": true,
+    "types": ["node"]
+  },
+  // The fixture app under test/fixtures is deliberately absent: it is a consumer,
+  // resolving its own React and Vite out of its own node_modules, and typechecking
+  // it from in here would only prove that we can confuse tsc.
+  "include": ["src", "tsup.config.ts", "vitest.config.ts", "test/unit", "test/e2e"]
+}

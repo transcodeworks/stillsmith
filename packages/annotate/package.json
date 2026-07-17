@@ -1,0 +1,35 @@
+{
+  "name": "@stillsmith/annotate",
+  "version": "0.1.0",
+  "description": "stillsmith's annotation core: the Target/anchor model, the DOM overlay drawer, and target suggestion. Shared by @stillsmith/capture and @stillsmith/tour (runtime).",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./global.js": "./dist/annotate.global.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "stillsmith",
+    "annotations",
+    "overlay"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "prepare": "tsup"
+  },
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^5.9.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "stillsmith-fixture-no-vite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "dependencies": {
+    "react": "^19",
+    "react-dom": "^19"
+  },
+  "devDependencies": {
+    "@stillsmith/capture": "workspace:*",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "postcss": "^8.5.3",
+    "typescript": "^5.9.2"
+  }
+}

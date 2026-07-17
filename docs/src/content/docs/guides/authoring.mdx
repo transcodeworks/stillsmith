@@ -1,0 +1,95 @@
+---
+title: The authoring GUI
+description: Place annotations visually. Save writes TypeScript back into your scene file.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+import { Image } from 'astro:assets';
+import gui from '../../../assets/shots/stillsmith-authoring-docs.webp';
+
+```bash
+stillsmith dev
+```
+
+| | |
+| --- | --- |
+| Authoring GUI | `http://localhost:5173/__stillsmith/author` |
+| Scene browser | `http://localhost:5173/__stillsmith/` |
+
+<Image src={gui} alt="stillsmith's authoring GUI, editing an annotation on the Pebble workspace scene" />
+
+<Aside type="tip" title="That screenshot is stillsmith, captured by stillsmith">
+The image above is a scene, not a hand-taken screenshot of the editor. It renders
+the real authoring GUI, against the real API, with a real scene loaded in its
+preview iframe, and `stillsmith capture` photographs it like anything else. If the
+GUI changes and nobody re-captures, this page breaks in CI instead of going
+quietly stale.
+</Aside>
+
+## The loop
+
+Pick a scene, a shot, and a preset. The scene renders live in an iframe at the
+preset's true pixel size, scaled down to fit but never reflowed, so what you see
+is the layout that will ship.
+
+Add an annotation, hit **pick**, then click the element you mean. stillsmith infers
+the most robust target it can and tells you how good it is:
+
+| Quality | Meaning |
+| --- | --- |
+| `stable` | A `data-shot`, a stable id, or a `data-testid`. Survives re-renders and preset changes. |
+| `ok` | Matched by text. Works, but add a `data-shot`. |
+| `brittle` | An absolute rect. Will break the moment anything moves. |
+
+It deliberately skips framework-generated ids (React's `useId`, react-aria). They
+look like stable selectors but change on every render, so an annotation built on
+one would silently fail to resolve at capture time.
+
+## Drag to position
+
+Every annotation is grabbable right in the preview, and the cursor turns into a
+grab handle over anything you can move. Pick up an outline box, a highlight, a
+callout, a numbered label, or an arrowhead and drop it where you want it. The drag
+writes straight into that annotation's
+[`offset`](/guides/annotations/#adjusting-placement-with-offset), the same
+`{ dx, dy }` you could type into the fields by hand, and each kind moves the same
+thing it moves for a typed offset.
+
+The offset panel updates live as you drag, so you can grab an annotation to get
+close and then nudge the last pixel or two by keyboard.
+
+## The preview is not a mock
+
+It runs the same drawing engine against the iframe's document that runs against
+the page at capture time, so what you nudge here is what comes out of the shot.
+There's no second implementation to drift.
+
+## Save writes TypeScript
+
+Saving edits your `.scene.tsx` in place:
+
+```diff
+   {
+     kind: "callout",
+     target: { selector: "[data-shot='inspector']" },
+     text: "The inspector edits the selected specimen.",
+     placement: "left",
+-    offset: { dy: -120 },
++    offset: { dy: -64 },
+   },
+```
+
+That's the whole diff from nudging a callout in the GUI. stillsmith edits only the
+properties you changed, prints them compactly, and runs your formatter (Biome or
+Prettier), so a visual tweak produces a diff a reviewer can read rather than a
+reformatted file.
+
+<Aside type="caution" title="Two limits">
+A shot whose initialiser isn't an object literal, built by a helper call for
+instance, is read-only. stillsmith refuses to rewrite code it can't understand rather
+than guessing.
+
+A comment written inside a property that gets rewritten, between two annotations
+for example, is lost, because that property is regenerated from data. Comments on
+the shot, the scene, and any untouched property survive.
+</Aside>

@@ -1,0 +1,26 @@
+{
+  "name": "stillsmith-example-rock-app",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "plan": "stillsmith plan",
+    "capture": "stillsmith capture",
+    "dev": "stillsmith dev",
+    "start": "vite"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.10",
+    "react": "^19",
+    "react-dom": "^19",
+    "@stillsmith/tour": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^5.0.1",
+    "@stillsmith/capture": "workspace:*",
+    "sharp": "^0.35.3",
+    "vite": "^8.1.5"
+  }
+}

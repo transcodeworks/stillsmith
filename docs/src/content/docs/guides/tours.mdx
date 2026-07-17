@@ -1,0 +1,118 @@
+---
+title: Guided tours
+description: Onboarding tours defined as code, authored visually, run by a tiny production runtime.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+A tour follows the same idea as a screenshot: define it against the real app, in
+the repo, and it can't quietly rot. Steps anchor to elements with the same
+`data-shot` selectors your shots use, live in a `.tour.ts` next to the feature
+they tour, and ship in the same PR as the UI change that would otherwise break
+them.
+
+Two packages split the work:
+
+- **`@stillsmith/tour`** is the production runtime: small, framework-neutral, two
+  dependencies. This is what your app installs and ships.
+- **`@stillsmith/capture`** is the dev dependency you already have. It authors tours,
+  providing the editor's tours mode, the codemod that writes your `.tour.ts` back,
+  and the MCP tools for agents.
+
+## Declaring a tour
+
+```ts
+// src/tours/onboarding.tour.ts
+import type { Tour } from "@stillsmith/tour";
+
+export const Onboarding = {
+  id: "onboarding",
+  steps: [
+    { title: "Welcome", body: "A quick look around." },
+    { target: { selector: "[data-shot='search']" }, body: "Find anything from here." },
+    {
+      target: { selector: "[data-shot='save']" },
+      body: "Go ahead and click it.",
+      advance: { on: "click" },
+    },
+    { route: "/settings", target: { selector: "[data-shot='theme']" }, body: "Make it yours." },
+  ],
+} satisfies Tour;
+```
+
+Named exports are tours, the same way named exports of a scene file are shots.
+Targets resolve `selector` → `text` → `rect`, same as annotations, and the same
+rule applies: a `data-shot` attribute is the anchor that survives.
+
+## Running it
+
+```tsx
+import { TourAutoStart } from "@stillsmith/tour/react";
+import { Onboarding } from "@/tours/onboarding.tour";
+
+<TourAutoStart tour={Onboarding} />
+```
+
+Or imperatively, with `startTour(Onboarding)`. Progress persists in
+`localStorage`: a completed or dismissed tour stays quiet, and an interrupted one
+resumes where it left off. Esc dismisses, arrow keys step, and focus moves into
+the card and back out at the end.
+
+The runtime covers the awkward parts:
+
+- Targets that mount late are polled for per-step. `optional: true` skips one that
+  never shows; a required miss ends the tour with a console warning and no
+  persisted verdict, so it tries again next visit.
+- The spotlight is an SVG cutout that passes clicks through to the real control,
+  which is what makes `advance: { on: "click" }` work.
+- Tooltips flip and shift at viewport edges, and a step's `offset` is applied last
+  and always wins.
+
+<Aside type="note">
+A step with `route` navigates there first, through a three-function
+`RouterAdapter`. The default drives `history.pushState` and dispatches
+`popstate`; if your router keeps its own state store, pass an adapter wired
+to it in `TourOptions`.
+</Aside>
+
+## Authoring visually
+
+Add the globs to your config:
+
+```ts
+export default defineConfig({
+  scenes: ["src/**/*.scene.tsx"],
+  tours: ["src/tours/*.tour.ts"],
+  // …
+});
+```
+
+`stillsmith dev` then grows a tours mode next to shots. Its stage doesn't render a
+scene; it iframes your running app, with a route bar. Click an element to target
+it (the same suggestion engine grades how stable the selector is), drag the card
+to nudge its `offset`, or press play to run the real tour in the frame.
+Rehearsals run with persistence off, so they never mark the real tour completed.
+
+Save writes your `.tour.ts` back through the same codemod that writes shots: only
+the `steps` property is touched, minimal diff, your formatter.
+
+By default the stage serves your app through stillsmith's merged Vite server. If
+your app runs its own dev server — a Next.js app under `next dev`, say — point
+stillsmith at it instead:
+
+```ts
+appUrl: "http://localhost:3000",
+```
+
+The stage then iframes that origin directly, no build integration at all. Note
+that a cross-origin `appUrl` disables live step previews in the GUI (the
+browser forbids reaching into the frame); the MCP `preview_step` tool renders
+through Playwright and still works.
+
+## Agents
+
+The MCP server gains the tour counterparts of its scene tools: `list_tours`
+(what exists), `inspect_app` (what's targetable on a route, with stability
+grades), and `preview_step` (render one step, saved or proposed inline, over the
+live app and return the PNG). The injected runtime is resolved from your
+`@stillsmith/tour` install, so what the agent sees is the version you ship.

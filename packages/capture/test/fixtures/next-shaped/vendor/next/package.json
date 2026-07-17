@@ -1,0 +1,6 @@
+{
+  "name": "next",
+  "version": "0.0.0-stillsmith-stub",
+  "private": true,
+  "description": "Empty stub so host detection sees `next` without installing the real package."
+}

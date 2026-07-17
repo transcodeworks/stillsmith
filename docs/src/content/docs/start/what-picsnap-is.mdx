@@ -1,0 +1,65 @@
+---
+title: What stillsmith is
+description: Why screenshots rot, and what stillsmith does about it.
+---
+
+import tour from '../../../assets/shots/workspace-tour.webp';
+import { Image } from 'astro:assets';
+
+A mockup drawn in Figma was never the product. A screenshot taken by hand was the
+product at the moment it was taken, but then someone renames a button, and the
+documentation stays wrong until somebody notices.
+
+stillsmith treats a screenshot as something you build from the components you ship,
+rather than something you make by hand.
+
+## A scene renders the real thing
+
+You declare a scene next to the component it shoots, the way you'd write a
+Storybook story:
+
+```tsx
+// src/components/workspace.scene.tsx
+import type { Scene, Shot } from "@stillsmith/capture/react";
+import { Workspace } from "@/components/Workspace";
+import { AMETHYST, ROCKS } from "@/data/rocks";
+
+export default {
+  render: () => <Workspace rocks={ROCKS} selected={AMETHYST} />,
+} satisfies Scene;
+
+export const Tour: Shot = { tags: ["docs"] };
+```
+
+That's the real `Workspace` component, over fixture data. If someone changes
+`Workspace`'s props, this file stops compiling, so the screenshot can't go stale
+without someone finding out.
+
+<Image src={tour} alt="The Pebble rock-collection app, annotated by stillsmith" />
+
+Everything in that image, including the numbered pins and the callout, is
+produced by `stillsmith capture`. No image editor was involved.
+
+## The core ideas
+
+**stillsmith merges your app's build** rather than bringing its own. Your Vite
+aliases, plugins and CSS pipeline all apply to scenes, which is what lets a scene
+`import { Workspace } from "@/components/Workspace"` and have it work.
+
+**Annotations resolve by selector, not coordinates.** A callout points at
+`[data-shot='inspector']`, so the same annotation lands correctly at 1280×800 and
+at 2560×1440. If the element moves, the annotation moves with it; if it
+disappears, you get a warning rather than a misplaced arrow.
+
+**Shots live in code.** They're named exports in a `.scene.tsx`, reviewable in a
+pull request like anything else, and the [visual editor](/guides/authoring/)
+writes back into that file.
+
+## What it isn't
+
+stillsmith produces screenshots. It doesn't diff them.
+
+If you want to know whether something changed, you want visual-regression
+testing: Playwright's `toHaveScreenshot`, or Chromatic. stillsmith answers a
+different question, which is how to produce the asset in the first place. The two
+work together fine.

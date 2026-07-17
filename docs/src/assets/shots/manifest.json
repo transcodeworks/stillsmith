@@ -1,0 +1,59 @@
+{
+  "images": [
+    {
+      "scene": "rock-inspector",
+      "shot": "docs",
+      "preset": "docs",
+      "path": "rock-inspector-docs.webp",
+      "width": 680,
+      "height": 1240,
+      "tags": [
+        "docs"
+      ]
+    },
+    {
+      "scene": "rock-inspector",
+      "shot": "annotated",
+      "preset": "docs",
+      "path": "rock-inspector-annotated.webp",
+      "width": 1280,
+      "height": 1240,
+      "tags": [
+        "docs"
+      ]
+    },
+    {
+      "scene": "rock-shelf",
+      "shot": "docs",
+      "preset": "docs",
+      "path": "rock-shelf-docs.webp",
+      "width": 1800,
+      "height": 1120,
+      "tags": [
+        "docs"
+      ]
+    },
+    {
+      "scene": "workspace",
+      "shot": "tour",
+      "preset": "docs",
+      "path": "workspace-tour.webp",
+      "width": 2560,
+      "height": 1600,
+      "tags": [
+        "docs"
+      ]
+    },
+    {
+      "scene": "stillsmith-authoring",
+      "shot": "docs",
+      "preset": "docs",
+      "path": "stillsmith-authoring-docs.webp",
+      "width": 2560,
+      "height": 1600,
+      "tags": [
+        "docs"
+      ]
+    }
+  ]
+}

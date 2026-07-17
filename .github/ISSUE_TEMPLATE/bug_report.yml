@@ -1,0 +1,44 @@
+name: Bug report
+description: Something doesn't work the way it should.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+      placeholder: |
+        Ran `stillsmith capture` with a scene that…
+        Expected the shot to…
+        Instead…
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: >
+        The smallest scene / tour / config that shows the problem. A repo link is
+        ideal; an inline snippet is fine for small cases.
+      render: tsx
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: Affected package and version
+      placeholder: "@stillsmith/capture 0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node version, package manager, and browser if relevant.
+      placeholder: "macOS 15, Node 24, pnpm 11.9.0"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or output
+      description: Any relevant CLI output, stack trace, or screenshot.
+      render: shell

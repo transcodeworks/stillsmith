@@ -1,0 +1,59 @@
+{
+  "name": "@stillsmith/tour",
+  "version": "0.1.0",
+  "description": "Guided onboarding tours, defined as code in your repo. The production runtime for tours authored with stillsmith.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "import": "./dist/react/index.js"
+    },
+    "./global.js": "./dist/tour.global.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "onboarding",
+    "product-tour",
+    "guided-tour",
+    "stillsmith"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "tsup"
+  },
+  "dependencies": {
+    "@floating-ui/dom": "^1.8.0",
+    "@stillsmith/annotate": "workspace:^"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/jsdom": "^28.0.3",
+    "@types/react": "^19",
+    "jsdom": "^28.0.0",
+    "react": "^19",
+    "tsup": "^8.3.0",
+    "typescript": "^5.9.2",
+    "vitest": "^4.1.10"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

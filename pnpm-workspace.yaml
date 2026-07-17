@@ -1,0 +1,12 @@
+packages:
+  - packages/*
+  - examples/*
+  - docs
+  - packages/capture/test/fixtures/app
+  - packages/capture/test/fixtures/tour-app
+  - packages/capture/test/fixtures/no-vite
+  - packages/capture/test/fixtures/next-shaped
+
+allowBuilds:
+  esbuild: true
+  sharp: true

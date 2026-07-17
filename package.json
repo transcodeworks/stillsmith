@@ -1,0 +1,28 @@
+{
+  "name": "stillsmith-monorepo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "pnpm --filter @stillsmith/capture... build",
+    "dev": "pnpm --filter @stillsmith/capture dev",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter @stillsmith/capture --filter @stillsmith/tour test",
+    "example": "pnpm --filter stillsmith-example-rock-app",
+    "lint": "biome lint .",
+    "format": "biome format --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "docs": "pnpm --filter stillsmith-docs"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.2"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.9.0",
+      "onFail": "download"
+    }
+  }
+}

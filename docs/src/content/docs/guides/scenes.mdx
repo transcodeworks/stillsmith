@@ -1,0 +1,113 @@
+---
+title: Scenes and shots
+description: The authoring model. A scene is what renders; a shot is one photograph of it.
+---
+
+A **scene** is what renders. A **shot** is one photograph of it.
+
+One scene, many shots: the same rock shelf at a marketing size and a docs size,
+one plain and one annotated. They share a render, so they can't drift apart.
+
+```tsx title="src/components/rock-shelf.scene.tsx"
+import type { Scene, Shot } from "@stillsmith/capture/react";
+import { RockShelf } from "@/components/RockShelf";
+import { OBSIDIAN, ROCKS } from "@/data/rocks";
+
+// The default export is the scene.
+export default {
+  render: () => <RockShelf rocks={ROCKS} selectedId={OBSIDIAN.id} />,
+} satisfies Scene;
+
+// Every named export is a shot.
+export const Default: Shot = {};
+
+export const Docs: Shot = {
+  tags: ["docs"],
+  viewport: { width: 900, height: 560 },
+};
+```
+
+## Naming
+
+| Thing | Comes from | Example |
+| --- | --- | --- |
+| Scene id | The filename, minus `.scene.tsx` | `rock-shelf.scene.tsx` → `rock-shelf` |
+| Shot name | The export, kebab-cased | `export const Docs` → `docs` |
+| Filename | `<scene>-<shot>.jpg` | `rock-shelf-docs.jpg` |
+
+A shot named `default` contributes nothing to the filename, so the common
+single-shot case writes `rock-shelf.jpg` rather than `rock-shelf-default.jpg`. The
+extension follows the target's `format` — jpeg by default.
+
+Override either with `id` on the scene or `name` on the shot.
+
+## What a shot can say
+
+```tsx
+export const Docs: Shot = {
+  tags: ["docs"],                              // which targets pick it up
+  presets: ["docs"],                           // restrict to these presets
+  viewport: { width: 900, height: 560 },       // override the preset's size
+  fullPage: false,                             // capture the scroll height
+  delay: 0,                                    // extra settle time, ms
+  annotations: [ /* … */ ],                    // see Annotations
+};
+```
+
+`presets` cascades: a shot's presets win, then the scene's, then every preset in
+the config.
+
+## Fixtures
+
+A scene renders the real component, which means it needs real-shaped data. Type
+your fixtures against your model and they'll break loudly when the model moves:
+
+```ts title="src/data/rocks.ts"
+export interface Rock {
+  id: string;
+  name: string;
+  kind: "igneous" | "sedimentary" | "metamorphic" | "mineral";
+  hardness: number;
+  // …
+}
+
+export const ROCKS: Rock[] = [
+  { id: "obsidian", name: "Obsidian", kind: "igneous", hardness: 5.5, /* … */ },
+];
+```
+
+If someone renames `hardness` to `mohs`, `rocks.ts` stops compiling, and so does
+the scene that imports it. You find out at compile time rather than from a
+screenshot showing a field that no longer exists.
+
+## Add a `data-shot` where you'll want to point
+
+Annotations resolve by selector. A class name or a DOM path can move under you;
+an attribute you put there on purpose won't.
+
+```tsx title="src/components/RockInspector.tsx" ins="data-shot=\"polish\""
+<button type="button" data-shot="polish">
+  Send to the tumbler
+</button>
+```
+
+```tsx
+{ kind: "callout", target: { selector: "[data-shot='polish']" }, text: "Irreversible." }
+```
+
+You don't have to. stillsmith will fall back to a stable id, a `data-testid`, or
+matching on text. But `data-shot` is the one that survives a refactor, and both
+the [authoring GUI](/guides/authoring/) and the [MCP server](/guides/mcp/) will
+suggest adding one.
+
+## Where scenes live
+
+Anywhere your `scenes` globs point:
+
+```tsx title="stillsmith.config.tsx"
+scenes: ["src/**/*.scene.tsx"],
+```
+
+Colocating them next to the component matters: a scene that lives beside
+`RockShelf.tsx` gets updated by whoever changes `RockShelf.tsx`, because it's
+right there. A scene in a distant `screenshots/` directory gets forgotten.

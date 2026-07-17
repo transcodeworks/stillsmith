@@ -89,10 +89,22 @@ pnpm changeset
 ```
 
 Commit the generated file under `.changeset/`. After merge to `main`, CI opens
-a **Version Packages** PR; merging that publishes. You need an `NPM_TOKEN`
-repository secret for publish to succeed.
+a **Version Packages** PR; merging that publishes via
+[npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) (OIDC) —
+no `NPM_TOKEN` secret.
 
-Docs-only and internal tooling changes do not need a changeset.
+Each package needs a trusted publisher on npmjs.com → package → Settings →
+Trusted Publisher → GitHub Actions:
+
+| Field | Value |
+| --- | --- |
+| Organization or user | `transcodeworks` |
+| Repository | `stillsmith` |
+| Workflow filename | `release.yml` |
+| Allowed actions | `npm publish` |
+
+Configure that on all three packages. Docs-only and internal tooling changes do
+not need a changeset.
 
 ## What ships where
 

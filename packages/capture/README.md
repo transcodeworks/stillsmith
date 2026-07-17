@@ -10,8 +10,8 @@ Hand-composed mockups drift from the product and manual screenshots go stale
 silently. A scene renders the real component over fixture data, so when a prop
 changes, the scene fails to compile instead of quietly lying in your docs.
 
-> **Status: M1–M4 complete.** Capture, annotations, the visual authoring tool, and
-> the MCP server all work end to end — see [DESIGN.md](../../DESIGN.md).
+> **Status: early development.** Capture, annotations, the visual authoring tool,
+> and the MCP server work end to end, but APIs may still change.
 
 ## Install
 

@@ -8,12 +8,11 @@ environment running.
 **Bug fixes, docs, and typos:** open a pull request directly. You don't need to
 file an issue first if the PR itself explains the bug.
 
-**Features and API changes need an issue first.** The project has a design
-direction, written up in [DESIGN.md](./DESIGN.md) and
-[DESIGN-TOURS.md](./DESIGN-TOURS.md), and a feature that cuts against it won't
-be merged no matter how good the code is. Describe the problem you want to
-solve and the API you have in mind, then wait for a maintainer to agree on the
-direction before starting work.
+**Features and API changes need an issue first.** Describe the problem you want
+to solve and the API you have in mind, then wait for a maintainer to agree on
+the direction before starting work. The project is still in early development,
+so a feature that cuts against the current design direction won't be merged no
+matter how good the code is.
 
 ## Getting set up
 

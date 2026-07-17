@@ -65,8 +65,7 @@ stillsmith capture
 - **Guided tours, same bet.** [`@stillsmith/tour`](./packages/tour) runs onboarding
   tours from type-checked `.tour.ts` files in your repo, anchored on the same
   `data-shot` selectors your screenshots use — authored visually in `stillsmith dev`
-  against your running app. See the [tours guide](https://transcodeworks.github.io/stillsmith/guides/tours/)
-  and [DESIGN-TOURS.md](./DESIGN-TOURS.md).
+  against your running app. See the [tours guide](https://transcodeworks.github.io/stillsmith/guides/tours/).
 
 ## Getting started
 
@@ -105,8 +104,6 @@ The guides:
 | [MCP](https://transcodeworks.github.io/stillsmith/guides/mcp/) | Driving stillsmith from an agent. |
 | [CLI reference](https://transcodeworks.github.io/stillsmith/reference/cli/) | Every command and flag. |
 
-For the architecture and roadmap, see **[DESIGN.md](./DESIGN.md)**.
-
 ## Repository layout
 
 | Path | What |
@@ -138,8 +135,10 @@ The example depends on `stillsmith` via `workspace:*`, so `pnpm build` then
 
 ## Status
 
-Capture, annotations, the visual authoring tool, and the MCP server all work end
-to end. See **[DESIGN.md](./DESIGN.md)** for what's next.
+stillsmith is in early development. APIs, CLI flags, and package boundaries may
+change without a major version bump. Capture, annotations, the visual authoring
+tool, and the MCP server already work end to end — expect rough edges and
+incomplete docs while things settle.
 
 ## License
 

@@ -141,8 +141,8 @@ class Drawer {
     return svg;
   }
 
-  private markerId(color: string, size: number): string {
-    const id = `ps-ah-${color.replace(/[^a-z0-9]/gi, "")}-${size}`;
+  private markerId(color: string, size: number, refX: number): string {
+    const id = `ps-ah-${color.replace(/[^a-z0-9]/gi, "")}-${size}-x${refX}`;
     if (!this.markers.has(id)) {
       this.getSvg();
       const marker = this.doc.createElementNS(SVGNS, "marker");
@@ -150,7 +150,11 @@ class Drawer {
       marker.setAttribute("markerUnits", "userSpaceOnUse");
       marker.setAttribute("markerWidth", String(size));
       marker.setAttribute("markerHeight", String(size));
-      marker.setAttribute("refX", String(size));
+      // Marker tip is at x=size. refX is where the path end docks: 0 puts the
+      // base on the path end so the tip extends past it. The shaft is shortened
+      // in drawLine so the stroke stops under the fill instead of poking through
+      // the point (round linecaps otherwise blunt the tip).
+      marker.setAttribute("refX", String(refX));
       marker.setAttribute("refY", String(size / 2));
       marker.setAttribute("orient", "auto");
       const tip = this.doc.createElementNS(SVGNS, "path");
@@ -187,6 +191,9 @@ class Drawer {
     head?: number,
   ): SVGPathElement {
     const path = this.doc.createElementNS(SVGNS, "path");
+    // Curve control (shared by the path and the end-tangent used to dock the head).
+    let cx = 0;
+    let cy = 0;
     if (curve) {
       const mx = (from.x + to.x) / 2;
       const my = (from.y + to.y) / 2;
@@ -195,17 +202,33 @@ class Drawer {
       const len = Math.hypot(vx, vy) || 1;
       // Bow the curve perpendicular to the line by ~18% of its length.
       const off = len * 0.18;
-      const cx = mx + (-vy / len) * off;
-      const cy = my + (vx / len) * off;
-      path.setAttribute("d", `M${from.x},${from.y} Q${cx},${cy} ${to.x},${to.y}`);
+      cx = mx + (-vy / len) * off;
+      cy = my + (vx / len) * off;
+    }
+
+    // Path end: for arrowheads, stop under the triangle so the tip stays sharp.
+    let end = to;
+    let headRefX = 0;
+    if (head) {
+      const tx = curve ? to.x - cx : to.x - from.x;
+      const ty = curve ? to.y - cy : to.y - from.y;
+      const tlen = Math.hypot(tx, ty) || 1;
+      const pull = Math.min(head, Math.max(0, tlen - 1));
+      end = { x: to.x - (tx / tlen) * pull, y: to.y - (ty / tlen) * pull };
+      // Dock so the tip (x=head) still lands on the intended `to`.
+      headRefX = head - pull;
+    }
+
+    if (curve) {
+      path.setAttribute("d", `M${from.x},${from.y} Q${cx},${cy} ${end.x},${end.y}`);
     } else {
-      path.setAttribute("d", `M${from.x},${from.y} L${to.x},${to.y}`);
+      path.setAttribute("d", `M${from.x},${from.y} L${end.x},${end.y}`);
     }
     path.setAttribute("stroke", color);
     path.setAttribute("stroke-width", String(width));
     path.setAttribute("stroke-linecap", "round");
     path.setAttribute("fill", "none");
-    if (head) path.setAttribute("marker-end", `url(#${this.markerId(color, head)})`);
+    if (head) path.setAttribute("marker-end", `url(#${this.markerId(color, head, headRefX)})`);
     this.getSvg().appendChild(path);
     return path;
   }

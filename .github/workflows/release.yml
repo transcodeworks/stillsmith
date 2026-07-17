@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  # Required for npm trusted publishing (OIDC). No long-lived NPM_TOKEN.
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Changesets needs full history to decide what to bump.
+          fetch-depth: 0
+
+      # Reads `packageManager` from package.json — see ci.yml for why that field
+      # (not `devEngines.packageManager`) is the pin.
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          # Needed so the npm CLI targets the public registry for OIDC publish.
+          registry-url: https://registry.npmjs.org
+
+      - run: pnpm install --frozen-lockfile
+
+      # Build before publish so dist/ matches the version being released.
+      - run: pnpm build
+
+      - name: Create release PR or publish
+        uses: changesets/action@v1
+        with:
+          title: "chore: version packages"
+          commit: "chore: version packages"
+          publish: pnpm release
+          version: pnpm version-packages
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Empty on purpose: changesets/action otherwise writes a token into
+          # ~/.npmrc, which blocks OIDC trusted publishing. See
+          # https://github.com/changesets/changesets/issues/1152#issuecomment-3190884868
+          NPM_TOKEN: ""

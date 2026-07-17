@@ -8,18 +8,17 @@ environment running.
 **Bug fixes, docs, and typos:** open a pull request directly. You don't need to
 file an issue first if the PR itself explains the bug.
 
-**Features and API changes need an issue first.** The project has a design
-direction, written up in [DESIGN.md](./DESIGN.md) and
-[DESIGN-TOURS.md](./DESIGN-TOURS.md), and a feature that cuts against it won't
-be merged no matter how good the code is. Describe the problem you want to
-solve and the API you have in mind, then wait for a maintainer to agree on the
-direction before starting work.
+**Features and API changes need an issue first.** Describe the problem you want
+to solve and the API you have in mind, then wait for a maintainer to agree on
+the direction before starting work. The project is still in early development,
+so a feature that cuts against the current design direction won't be merged no
+matter how good the code is.
 
 ## Getting set up
 
 You need Node and pnpm. The pnpm version is pinned in `package.json` under
-`devEngines.packageManager`, so with corepack enabled you get the right one
-automatically. For Node, use the version CI uses (see
+`packageManager`, so with corepack enabled you get the right one automatically.
+For Node, use the version CI uses (see
 [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)).
 
 ```bash
@@ -76,6 +75,36 @@ package name as the scope where it helps (`capture`, `tour`, `annotate`,
 One logical change per PR. Behavior changes should come with a test that would
 have caught the regression. If you change the public API, update the relevant
 guide under `docs/` and the package README in the same PR.
+
+## Releases
+
+Published packages (`@stillsmith/annotate`, `@stillsmith/capture`,
+`@stillsmith/tour`) version together via
+[Changesets](https://github.com/changesets/changesets).
+
+For any PR that should ship to npm, add a changeset with the code change:
+
+```bash
+pnpm changeset
+```
+
+Commit the generated file under `.changeset/`. After merge to `main`, CI opens
+a **Version Packages** PR; merging that publishes via
+[npm trusted publishing](https://docs.npmjs.com/trusted-publishers/) (OIDC) —
+no `NPM_TOKEN` secret.
+
+Each package needs a trusted publisher on npmjs.com → package → Settings →
+Trusted Publisher → GitHub Actions:
+
+| Field | Value |
+| --- | --- |
+| Organization or user | `transcodeworks` |
+| Repository | `stillsmith` |
+| Workflow filename | `release.yml` |
+| Allowed actions | `npm publish` |
+
+Configure that on all three packages. Docs-only and internal tooling changes do
+not need a changeset.
 
 ## What ships where
 

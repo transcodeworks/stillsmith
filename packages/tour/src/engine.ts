@@ -11,7 +11,16 @@
  *     GUI runs the same engine against an iframe, tests against jsdom.
  *   - Async work is generation-guarded: a `next()` during a slow target wait
  *     abandons the stale step instead of racing it.
+ *   - A tour's fixture is seeded once before the first step and undone once on
+ *     the way out, whichever exit the tour takes.
  */
+import {
+  getTourFixture,
+  toCleanup,
+  type TourFixture,
+  type TourFixtureCleanup,
+  type TourFixtureContext,
+} from "./fixtures.js";
 import { FocusManager } from "./focus.js";
 import { Spotlight } from "./overlay.js";
 import { clearProgress, defaultStorage, readProgress, writeProgress } from "./storage.js";
@@ -55,6 +64,24 @@ export function createTour(tour: Tour, options: TourOptions = {}): TourControlle
   let abort: AbortController | null = null;
   /** Per-step listener teardown (click-advance, route-advance). */
   let stepCleanup: (() => void) | null = null;
+  /** Undoes the tour's fixture. Lives for the whole run, not per-step. */
+  let fixtureCleanup: TourFixtureCleanup | null = null;
+
+  /** Explicit handlers win over ambient registration. */
+  function resolveFixture(name: string): TourFixture | undefined {
+    return options.fixtures?.[name] ?? getTourFixture(name, root.win);
+  }
+
+  /** Fire-and-forget: `finish` has to persist synchronously, and a fixture that
+   * fails to clean up is a warning, not an exception into the caller. */
+  function runFixtureCleanup(cleanup: TourFixtureCleanup | null): void {
+    if (!cleanup) return;
+    void Promise.resolve()
+      .then(cleanup)
+      .catch((err: unknown) => {
+        console.warn(`stillsmith-tour: fixture teardown failed: ${String(err)}`);
+      });
+  }
 
   function teardown(): void {
     generation += 1;
@@ -68,6 +95,11 @@ export function createTour(tour: Tour, options: TourOptions = {}): TourControlle
     tooltip = null;
     spotlight?.destroy();
     spotlight = null;
+    // Null before invoking: every terminal path funnels through here, and a
+    // second pass (destroy() after stop(), say) must not undo the seed twice.
+    const cleanup = fixtureCleanup;
+    fixtureCleanup = null;
+    runFixtureCleanup(cleanup);
     active = false;
   }
 
@@ -213,6 +245,58 @@ export function createTour(tour: Tour, options: TourOptions = {}): TourControlle
     options.onStepShow?.(i, step);
   }
 
+  /**
+   * Seed the tour's fixture, then show the first step.
+   *
+   * Setup runs before `showStep` writes any progress, so a tour that bails on a
+   * broken fixture leaves storage untouched and tries again on the next visit —
+   * the same "warn, never remember a tour the user never saw" rule a missing
+   * required target follows.
+   */
+  async function begin(startAt: number): Promise<void> {
+    if (!tour.fixture) {
+      void showStep(startAt, false);
+      return;
+    }
+
+    generation += 1;
+    const gen = generation;
+    const fixture = resolveFixture(tour.fixture);
+    if (!fixture) {
+      return bail(
+        `fixture "${tour.fixture}" is not registered — ending the tour. Call registerTourFixtures({ "${tour.fixture}": … }) before starting it.`,
+      );
+    }
+
+    const ctx: TourFixtureContext = { root, tourId: tour.id };
+    let cleanup: TourFixtureCleanup | null = null;
+    try {
+      cleanup = toCleanup(await fixture.setup(ctx), fixture, ctx);
+    } catch (err) {
+      // A stale generation means someone already ended the tour; bailing again
+      // would warn about a tour that is no longer running.
+      if (gen === generation) bail(`fixture "${tour.fixture}" setup failed: ${String(err)}`);
+      return;
+    }
+
+    // Torn down while seeding: the run is over, so undo the seed we just made
+    // rather than leaving demo data behind.
+    if (!active) {
+      runFixtureCleanup(cleanup);
+      return;
+    }
+    fixtureCleanup = cleanup;
+    // A superseded generation means a goTo() landed mid-setup and is already
+    // driving its own step; keep the fixture, drop the first-step call.
+    if (gen !== generation) return;
+
+    // Let the app render what we just seeded, so the first step doesn't flash
+    // the empty page under the scrim before its target mounts.
+    await settleFrames(root.win);
+    if (gen !== generation) return;
+    void showStep(startAt, false);
+  }
+
   function next(): void {
     if (!active) return;
     if (index + 1 >= tour.steps.length) {
@@ -241,7 +325,7 @@ export function createTour(tour: Tour, options: TourOptions = {}): TourControlle
         clearProgress(storageKey, storage);
       }
       active = true;
-      void showStep(startAt, false);
+      void begin(startAt);
     },
     next,
     back,

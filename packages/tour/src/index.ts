@@ -8,6 +8,15 @@
  * @stillsmith/annotate target model).
  */
 export { createTour, startTour } from "./engine.js";
+export {
+  applyTourFixture,
+  getTourFixture,
+  registerTourFixtures,
+  type TourFixture,
+  type TourFixtureCleanup,
+  type TourFixtureContext,
+  type TourFixtures,
+} from "./fixtures.js";
 export { renderStepPreview, type StepPreview, type StepPreviewOptions } from "./preview.js";
 export { createHistoryRouter } from "./router.js";
 export type { TourProgress, TourStatus } from "./storage.js";

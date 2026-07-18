@@ -172,6 +172,27 @@ export const KIND_LABEL: Record<RockKind, string> = {
   mineral: "Mineral",
 };
 
+/**
+ * Specimens the shelf never ships with — the onboarding tour seeds them so it
+ * has something to point at, and takes them away when it ends. No photo: these
+ * are demo data, and the gradient fallback is the honest way to render a rock
+ * nobody has photographed.
+ */
+export const DEMO_ROCKS: Rock[] = [
+  {
+    id: "demo-agate",
+    name: "Banded Agate",
+    kind: "mineral",
+    hardness: 7,
+    grams: 84,
+    foundAt: "Lake Superior shoreline",
+    foundOn: "2025-03-04",
+    colors: ["#f0a868", "#8c4a2f"],
+    notes: "Tumbled smooth. The banding only shows when it's wet.",
+    favourite: false,
+  },
+];
+
 export const OBSIDIAN = ROCKS[0] as Rock;
 export const AMETHYST = ROCKS[1] as Rock;
 export const MALACHITE = ROCKS[4] as Rock;

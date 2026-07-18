@@ -92,4 +92,39 @@ describe("authoring a tour against the running app", () => {
 
     await page.close();
   }, 120_000);
+
+  it("writes and removes a tour's fixture through the codemod", async () => {
+    const api = `${server.baseUrl}api`;
+    const state = (await (await fetch(`${api}/state`)).json()) as {
+      tours: { file: string; exportName: string; id: string }[];
+    };
+    const tour = state.tours.find((t) => t.exportName === "Onboarding");
+    if (!tour) throw new Error("fixture must expose the Onboarding tour");
+
+    const put = (props: Record<string, unknown>) =>
+      fetch(`${api}/tour`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ file: tour.file, exportName: tour.exportName, props }),
+      });
+
+    // Counted, not matched: the Seeded export in this same file declares a
+    // fixture of its own, and only Onboarding's may come and go here.
+    const fixtureCount = async () =>
+      (await readFile(TOUR_FILE, "utf8")).match(/fixture:/g)?.length ?? 0;
+    const before = await fixtureCount();
+
+    expect((await put({ fixture: "demo" })).ok).toBe(true);
+    expect(await fixtureCount()).toBe(before + 1);
+    expect(await readFile(TOUR_FILE, "utf8")).toContain('fixture: "demo"');
+
+    // `null` is how the editor says "remove this prop" — JSON has no undefined,
+    // so a cleared field would otherwise never reach the codemod at all.
+    expect((await put({ fixture: null })).ok).toBe(true);
+    const source = await readFile(TOUR_FILE, "utf8");
+    expect(await fixtureCount()).toBe(before);
+    expect(source).not.toContain('fixture: "demo"');
+    expect(source).toContain("satisfies Tour");
+    expect(source).toContain("A centered welcome step.");
+  }, 60_000);
 });

@@ -25,3 +25,19 @@ export const Onboarding = {
     },
   ],
 } satisfies Tour;
+
+/**
+ * A tour that can only run because its fixture seeds the specimen it points
+ * at: the app renders none by default.
+ */
+export const Seeded = {
+  id: "fixture-seeded",
+  fixture: "seed-specimens",
+  steps: [
+    {
+      target: { selector: "[data-shot='specimen-obsidian']" },
+      body: "This specimen exists only for the tour.",
+    },
+    { title: "Done", body: "And now it goes away." },
+  ],
+} satisfies Tour;

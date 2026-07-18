@@ -75,6 +75,70 @@ A step with `route` navigates there first, through a three-function
 to it in `TourOptions`.
 </Aside>
 
+## Fixtures: data the tour needs
+
+A tour walks your real app, so a feature with nothing in it has nothing to point
+at. A brand-new account shows an empty list, and the step that spotlights a row
+waits eight seconds and gives up. Name a fixture and the tour brings its own data:
+
+```ts
+export const Onboarding = {
+  id: "onboarding",
+  fixture: "demo-rocks",
+  steps: [/* … */],
+} satisfies Tour;
+```
+
+The name is a string, not a function, for the same reason `body` is: it
+round-trips through the authoring codemod. What it means lives in your app,
+registered once at startup:
+
+```ts
+import { registerTourFixtures } from "@stillsmith/tour";
+
+registerTourFixtures({
+  "demo-rocks": {
+    setup() {
+      shelfStore.add(DEMO_ROCKS);
+      return () => shelfStore.remove(DEMO_ROCKS.map((r) => r.id));
+    },
+  },
+});
+```
+
+`setup` runs before the first step; the cleanup it returns runs when the tour
+ends, whichever exit it takes — completed, dismissed, or torn down. Return
+nothing and provide a `teardown` instead if that reads better; a returned
+cleanup wins if you do both. Either may be async, and the engine waits for
+`setup` before showing step one.
+
+Register at module scope. A tour can start before React has mounted anything, so
+a fixture registered inside an effect is often too late.
+
+Three rules worth knowing:
+
+- **Setup must be idempotent.** A tour the user abandoned resumes on their next
+  visit and seeds again, over state that may or may not still hold the first
+  seed. Add by id rather than appending blindly.
+- **An unregistered or failing fixture ends the tour** with a console warning and
+  no persisted verdict — so a misconfigured deploy doesn't burn the tour's one
+  shot, and it tries again next visit. Same rule as a missing required target.
+- **Teardown isn't transactional.** If the user closes the tab mid-tour, nothing
+  runs. Prefer client-side or clearly-flagged demo data over records you'd have
+  to reach a server to delete.
+
+For a controller wired by hand, `TourOptions.fixtures` passes handlers directly
+and takes precedence over the registry:
+
+```ts
+startTour(Onboarding, { fixtures: { "demo-rocks": { setup } } });
+```
+
+The authoring GUI and the MCP `preview_step` / `inspect_app` tools apply the
+fixture too, so elements that only exist once data is present are targetable
+while you author. In the GUI the seed stays until you reload the frame or switch
+tours; a play-through seeds and cleans up on its own.
+
 ## Authoring visually
 
 Add the globs to your config:
@@ -94,7 +158,7 @@ to nudge its `offset`, or press play to run the real tour in the frame.
 Rehearsals run with persistence off, so they never mark the real tour completed.
 
 Save writes your `.tour.ts` back through the same codemod that writes shots: only
-the `steps` property is touched, minimal diff, your formatter.
+the `steps` and `fixture` properties are touched, minimal diff, your formatter.
 
 By default the stage serves your app through stillsmith's merged Vite server. If
 your app runs its own dev server — a Next.js app under `next dev`, say — point
@@ -116,3 +180,6 @@ The MCP server gains the tour counterparts of its scene tools: `list_tours`
 grades), and `preview_step` (render one step, saved or proposed inline, over the
 live app and return the PNG). The injected runtime is resolved from your
 `@stillsmith/tour` install, so what the agent sees is the version you ship.
+
+Both `inspect_app` and `preview_step` seed the tour's fixture first, so an agent
+writing a step against seeded data sees the same page your users will.

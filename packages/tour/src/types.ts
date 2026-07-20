@@ -10,6 +10,7 @@
  * codemod, the same reasoning that keeps shots codemod-editable.
  */
 import type { Offset, Target } from "@stillsmith/annotate";
+import type { TourFixtures } from "./fixtures.js";
 
 /** Where the tooltip sits relative to the target. Floating UI semantics: the
  * side, optionally pinned to the start/end of that side. The engine flips and
@@ -71,6 +72,11 @@ export interface Tour {
   steps: Step[];
   /** Progress persistence key. Defaults to `id`. */
   storageKey?: string;
+  /** Name of a fixture registered with `registerTourFixtures` — data the tour
+   * needs to have something to point at. Seeded before the first step, torn
+   * down when the tour ends. A string, not a function, for the same reason
+   * `body` is: it round-trips through the authoring codemod. */
+  fixture?: string;
   overlay?: {
     /** Dim everything outside the target. Default true. */
     dim?: boolean;
@@ -115,6 +121,9 @@ export interface TourOptions {
   storage?: StorageLike | null;
   /** How long a step waits for its target before giving up, ms. Default 8000. */
   waitTimeoutMs?: number;
+  /** Fixture handlers for this controller, checked before the window-level
+   * registry — explicit wiring beats ambient registration. */
+  fixtures?: TourFixtures;
   onStepShow?(index: number, step: Step): void;
   onFinish?(): void;
   onDismiss?(index: number): void;

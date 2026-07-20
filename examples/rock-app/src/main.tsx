@@ -6,16 +6,32 @@
  * the onboarding tour. `stillsmith dev` serves this at `/` and the authoring
  * GUI at `/__stillsmith/author`, so the tours mode edits this very app.
  */
-import { startTour } from "@stillsmith/tour";
-import { StrictMode, useEffect, useState } from "react";
+import { registerTourFixtures, startTour } from "@stillsmith/tour";
+import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 
 import { RockInspector } from "@/components/RockInspector";
 import { RockShelf } from "@/components/RockShelf";
 import { Toolbar } from "@/components/Toolbar";
-import { ROCKS } from "@/data/rocks";
+import { DEMO_ROCKS, ROCKS } from "@/data/rocks";
+import { shelfStore } from "@/data/shelf-store";
 import { Onboarding } from "@/tours/onboarding.tour";
 import "@/theme.css";
+
+/**
+ * What `fixture: "demo-rocks"` in the tour file means here.
+ *
+ * Registered at module scope because the tour starts below, before React has
+ * mounted anything — a fixture registered in an effect would be too late.
+ */
+registerTourFixtures({
+  "demo-rocks": {
+    setup() {
+      shelfStore.add(DEMO_ROCKS);
+      return () => shelfStore.remove(DEMO_ROCKS.map((r) => r.id));
+    },
+  },
+});
 
 function navigate(path: string) {
   window.history.pushState(null, "", path);
@@ -49,15 +65,16 @@ function Settings() {
 }
 
 function Shelf() {
+  const rocks = useSyncExternalStore(shelfStore.subscribe, shelfStore.get);
   const [selectedId, setSelectedId] = useState(ROCKS[1]?.id ?? "");
-  const selected = ROCKS.find((r) => r.id === selectedId) ?? ROCKS[0];
+  const selected = rocks.find((r) => r.id === selectedId) ?? rocks[0];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       <Toolbar />
       <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
         <main style={{ flex: 1, overflow: "auto" }}>
-          <RockShelf rocks={ROCKS} selectedId={selectedId} onSelect={setSelectedId} />
+          <RockShelf rocks={rocks} selectedId={selectedId} onSelect={setSelectedId} />
         </main>
         {selected && <RockInspector rock={selected} />}
       </div>

@@ -64,6 +64,35 @@ import { TourAutoStart } from "@stillsmith/tour/react";
   stay quiet, an interrupted tour resumes where it left off.
 - **Keyboard & focus** — focus moves into the card and back out at the end;
   Esc dismisses; arrows step; Tab cycles within the card.
+- **Fixtures** — a tour can name the demo data it needs, so it still has
+  something to show on an empty account.
+
+## Fixtures
+
+An empty shelf makes for a short tour. Name a fixture on the tour and register
+what the name means at app startup; the engine seeds it before the first step
+and cleans up when the tour ends, however it ends.
+
+```ts
+import { registerTourFixtures } from "@stillsmith/tour";
+
+registerTourFixtures({
+  "demo-rocks": {
+    setup() {
+      shelfStore.add(DEMO_ROCKS);
+      return () => shelfStore.remove(DEMO_ROCKS.map((r) => r.id));
+    },
+  },
+});
+
+export const Onboarding = { id: "onboarding", fixture: "demo-rocks", steps } satisfies Tour;
+```
+
+`setup` must be idempotent — a resumed tour seeds again — and an unregistered
+or failing fixture ends the tour with a warning and no persisted verdict, so it
+retries next visit. See the
+[tours guide](https://transcodeworks.github.io/stillsmith/guides/tours/) for the
+full contract.
 
 ## Targets
 

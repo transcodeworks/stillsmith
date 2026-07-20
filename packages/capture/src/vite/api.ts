@@ -70,6 +70,19 @@ export function apiMiddleware(
   server: ViteDevServer,
   config: ResolvedConfig,
 ): Connect.NextHandleFunction {
+  /**
+   * JSON has no `undefined`, so `JSON.stringify` drops any prop the editor
+   * cleared and the codemod never hears about the removal. `null` is the wire
+   * spelling of "remove this prop" — no editable prop takes null as a value.
+   */
+  const decodeProps = (props: object): Record<string, unknown> =>
+    Object.fromEntries(
+      Object.entries(props as Record<string, unknown>).map(([k, v]) => [
+        k,
+        v === null ? undefined : v,
+      ]),
+    );
+
   /** Resolve a client-supplied path to a real scene, or null. */
   const resolveSceneFile = async (file: unknown): Promise<string | null> => {
     if (typeof file !== "string") return null;
@@ -119,12 +132,7 @@ export function apiMiddleware(
           return sendJson(res, 400, { error: "missing props" });
         }
 
-        await setShotProps(
-          file,
-          body.exportName,
-          body.props as Record<string, unknown>,
-          config.root,
-        );
+        await setShotProps(file, body.exportName, decodeProps(body.props), config.root);
         return sendJson(res, 200, { ok: true });
       }
 
@@ -158,12 +166,7 @@ export function apiMiddleware(
           return sendJson(res, 400, { error: "missing props" });
         }
 
-        await setShotProps(
-          file,
-          body.exportName,
-          body.props as Record<string, unknown>,
-          config.root,
-        );
+        await setShotProps(file, body.exportName, decodeProps(body.props), config.root);
         return sendJson(res, 200, { ok: true });
       }
 

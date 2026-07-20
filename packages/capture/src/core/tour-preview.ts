@@ -46,8 +46,59 @@ declare global {
         step: Step,
         options?: { index?: number; total?: number; overlay?: Tour["overlay"] },
       ) => { warnings: string[]; dispose(): void };
+      applyTourFixture: (
+        name: string,
+        ctx: { root: { doc: Document; win: Window }; tourId: string },
+      ) => Promise<{ warning?: string }>;
     };
   }
+}
+
+/** Two frames plus a backstop — the settle idiom the whole pipeline shares. */
+async function settle(page: Page): Promise<void> {
+  await page.evaluate(
+    (backstopMs) =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        setTimeout(resolve, backstopMs);
+      }),
+    PAINT_BACKSTOP_MS,
+  );
+}
+
+/**
+ * Seed a tour's fixture into the live page before previewing or inspecting it,
+ * so steps that point at data-dependent elements have something to point at.
+ *
+ * This works because the page is the consumer's *real* app: its own startup
+ * code registered the fixture on `window`, and the injected bundle reads the
+ * same property. Nothing is torn down — the page dies with the caller.
+ */
+export async function applyPageFixture(
+  page: Page,
+  configRoot: string,
+  name: string,
+  tourId = name,
+): Promise<string[]> {
+  await page.addScriptTag({ content: await loadTourBundle(configRoot) });
+
+  const warning = await page.evaluate(
+    async ({ name, tourId }) => {
+      const api = window.__stillsmithTour;
+      if (!api) throw new Error("stillsmith: tour bundle did not initialise");
+      const result = await api.applyTourFixture(name, {
+        root: { doc: document, win: window },
+        tourId,
+      });
+      return result.warning ?? null;
+    },
+    { name, tourId },
+  );
+
+  // The fixture just changed app state; let the app render it before anything
+  // measures or photographs the page.
+  await settle(page);
+  return warning ? [warning] : [];
 }
 
 /** Draw `step` statically on `page` (the same preview the GUI shows). */
@@ -68,17 +119,9 @@ export async function applyStepPreview(
     { step, options },
   );
 
-  // Same two-frames-plus-backstop settle as the annotation bridge: the
-  // overlay is in the DOM, but the screenshot fires on the next line and
-  // must not catch a half-composited frame.
-  await page.evaluate(
-    (backstopMs) =>
-      new Promise<void>((resolve) => {
-        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-        setTimeout(resolve, backstopMs);
-      }),
-    PAINT_BACKSTOP_MS,
-  );
+  // Same settle as the annotation bridge: the overlay is in the DOM, but the
+  // screenshot fires on the next line and must not catch a half-composited frame.
+  await settle(page);
 
   return warnings;
 }

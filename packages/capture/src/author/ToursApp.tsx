@@ -9,6 +9,7 @@ import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panel
 import type { Offset, Target } from "@stillsmith/annotate";
 import type { Step } from "@stillsmith/tour";
 import { AppStage } from "./AppStage.jsx";
+import { Row, Text } from "./Fields.jsx";
 import { StepFields } from "./StepFields.jsx";
 import { TourStepList } from "./TourList.jsx";
 import {
@@ -22,13 +23,16 @@ import {
 } from "./api.js";
 
 function editable(tour: TourDTO["tour"]): EditableTour {
-  return { steps: tour.steps };
+  return { steps: tour.steps, fixture: tour.fixture };
 }
 
 function changedProps(original: EditableTour, draft: EditableTour): Partial<EditableTour> {
   const props: Record<string, unknown> = {};
   for (const key of Object.keys(draft) as (keyof EditableTour)[]) {
-    if (JSON.stringify(original[key]) !== JSON.stringify(draft[key])) props[key] = draft[key];
+    if (JSON.stringify(original[key]) === JSON.stringify(draft[key])) continue;
+    // `null` is the wire spelling of "remove this prop": JSON has no undefined,
+    // so a cleared field would otherwise vanish from the body silently.
+    props[key] = draft[key] === undefined ? null : draft[key];
   }
   return props;
 }
@@ -100,7 +104,7 @@ export function ToursApp({ modeToggle }: ToursAppProps) {
   }, [stepRoute]);
 
   const patchSteps = useCallback((mutate: (steps: Step[]) => Step[]) => {
-    setDraft((prev) => (prev ? { steps: mutate(structuredClone(prev.steps)) } : prev));
+    setDraft((prev) => (prev ? { ...prev, steps: mutate(structuredClone(prev.steps)) } : prev));
     setDirty(true);
   }, []);
 
@@ -333,6 +337,22 @@ export function ToursApp({ modeToggle }: ToursAppProps) {
           maxSize={560}
           groupResizeBehavior="preserve-pixel-size"
         >
+          <div className="list-head">
+            <span>Tour</span>
+          </div>
+          <div className="fields">
+            <Row label="fixture">
+              <Text
+                value={draft?.fixture}
+                placeholder="registered fixture name"
+                onChange={(fixture) => {
+                  setDraft((prev) => (prev ? { ...prev, fixture } : prev));
+                  setDirty(true);
+                }}
+              />
+            </Row>
+          </div>
+
           <div className="list-head">
             <span>Step {selected != null ? selected + 1 : "—"}</span>
           </div>

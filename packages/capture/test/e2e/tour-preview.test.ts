@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { withAppPage } from "../../src/core/capture.js";
 import { loadConfig } from "../../src/core/config.js";
 import { type StillsmithServer, startServer } from "../../src/core/server.js";
-import { applyStepPreview } from "../../src/core/tour-preview.js";
+import { applyPageFixture, applyStepPreview } from "../../src/core/tour-preview.js";
 import type { ResolvedConfig } from "../../src/types.js";
 
 /**
@@ -80,5 +80,48 @@ describe("step preview over the running app", () => {
 
     expect(warnings.length).toBe(1);
     expect(warnings[0]).toContain("no-such-thing");
+  }, 60_000);
+
+  it("seeds a fixture so a data-dependent step can resolve", async () => {
+    const preset = config.presets.test;
+    if (!preset) throw new Error("fixture must define a test preset");
+
+    const step = {
+      target: { selector: "[data-shot='specimen-obsidian']" },
+      body: "Seeded.",
+    };
+
+    const { before, after } = await withAppPage(
+      browser,
+      server.baseUrl,
+      config,
+      { route: "/", preset },
+      async (page) => {
+        // Without the fixture there is no specimen on the page at all.
+        const before = await applyStepPreview(page, config.root, step, { index: 0, total: 1 });
+        expect(await applyPageFixture(page, config.root, "seed-specimens")).toEqual([]);
+        const after = await applyStepPreview(page, config.root, step, { index: 0, total: 1 });
+        return { before, after };
+      },
+    );
+
+    expect(before.length).toBe(1);
+    expect(after).toEqual([]);
+  }, 60_000);
+
+  it("warns about an unregistered fixture instead of failing", async () => {
+    const preset = config.presets.test;
+    if (!preset) throw new Error("fixture must define a test preset");
+
+    const warnings = await withAppPage(
+      browser,
+      server.baseUrl,
+      config,
+      { route: "/", preset },
+      (page) => applyPageFixture(page, config.root, "no-such-fixture"),
+    );
+
+    expect(warnings.length).toBe(1);
+    expect(warnings[0]).toContain("no-such-fixture");
   }, 60_000);
 });

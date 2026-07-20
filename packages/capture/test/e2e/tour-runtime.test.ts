@@ -145,4 +145,63 @@ describe("tour runtime in a real browser", () => {
 
     await context.close();
   }, 60_000);
+
+  const specimen = "[data-shot='specimen-obsidian']";
+
+  it("seeds the tour's fixture before the first step and clears it at the end", async () => {
+    const { page, context } = await newPage();
+    await page.goto(`${root}/?tour=seeded`, { waitUntil: "load" });
+
+    // The app renders no specimens on its own; the first step can only anchor
+    // because the fixture put one there.
+    await page.waitForSelector(tooltip, { timeout: 30_000 });
+    expect(await page.locator(specimen).count()).toBe(1);
+    await expect
+      .poll(() => page.locator(body).textContent())
+      .toBe("This specimen exists only for the tour.");
+
+    await page.locator("[data-stillsmith-tour='next']").click();
+    await expect.poll(() => page.locator(body).textContent()).toBe("And now it goes away.");
+    await page.locator("[data-stillsmith-tour='next']").click();
+
+    // Completing the tour takes the demo data back out with it.
+    await expect.poll(() => page.locator(tooltip).count()).toBe(0);
+    await expect.poll(() => page.locator(specimen).count()).toBe(0);
+    const stored = await page.evaluate(() =>
+      window.localStorage.getItem("stillsmith-tour:fixture-seeded"),
+    );
+    expect(JSON.parse(stored ?? "{}")).toMatchObject({ status: "completed" });
+
+    await context.close();
+  }, 60_000);
+
+  it("clears seeded data when the tour is dismissed", async () => {
+    const { page, context } = await newPage();
+    await page.goto(`${root}/?tour=seeded`, { waitUntil: "load" });
+    await page.waitForSelector(tooltip, { timeout: 30_000 });
+    expect(await page.locator(specimen).count()).toBe(1);
+
+    await page.keyboard.press("Escape");
+    await expect.poll(() => page.locator(tooltip).count()).toBe(0);
+    await expect.poll(() => page.locator(specimen).count()).toBe(0);
+
+    await context.close();
+  }, 60_000);
+
+  it("seeds again when a tour resumes after a reload", async () => {
+    const { page, context } = await newPage();
+    await page.goto(`${root}/?tour=seeded`, { waitUntil: "load" });
+    await page.waitForSelector(tooltip, { timeout: 30_000 });
+
+    // A reload wipes the app's in-memory state; resuming has to re-seed, or
+    // the step it resumes onto has nothing to anchor to.
+    await page.reload({ waitUntil: "load" });
+    await page.waitForSelector(tooltip, { timeout: 30_000 });
+    await expect.poll(() => page.locator(specimen).count()).toBe(1);
+    await expect
+      .poll(() => page.locator(body).textContent())
+      .toBe("This specimen exists only for the tour.");
+
+    await context.close();
+  }, 60_000);
 });

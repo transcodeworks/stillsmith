@@ -26,7 +26,7 @@ import { z } from "zod";
 import { inspectPage } from "../core/annotate.js";
 import { type Logger, capture, renderShot, withAppPage, withScenePage } from "../core/capture.js";
 import { type Filters, buildPlan, formatPlan } from "../core/plan.js";
-import { applyStepPreview } from "../core/tour-preview.js";
+import { applyPageFixture, applyStepPreview } from "../core/tour-preview.js";
 import type { Annotation } from "@stillsmith/annotate";
 import type { Step } from "@stillsmith/tour";
 import type { Preset, ResolvedConfig, Shot } from "../types.js";
@@ -280,6 +280,7 @@ export async function runMcpServer(config: ResolvedConfig): Promise<void> {
           id: t.id,
           exportName: t.exportName,
           file: t.file,
+          fixture: t.tour.fixture,
           steps: t.tour.steps.map((s, index) => ({
             index,
             title: s.title,
@@ -299,29 +300,51 @@ export async function runMcpServer(config: ResolvedConfig): Promise<void> {
       title: "Inspect the running app's targetable elements",
       description:
         "Open the consumer's real app at a route and list what a tour step can anchor to: ready-to-use `target` selectors with stability grades. " +
-        "The tours counterpart of inspect_scene — use it BEFORE writing a step's target.",
+        "The tours counterpart of inspect_scene — use it BEFORE writing a step's target. " +
+        "Pass `tour` (or `fixture`) to seed that tour's data first, so elements that only exist once the app has data are inspectable.",
       inputSchema: {
         route: z.string().optional().describe("Route to open. Defaults to /."),
         preset: z.string().optional().describe("Viewport preset. Defaults to the first."),
         limit: z.number().optional().describe("Max elements to return (default 100)"),
+        tour: z
+          .string()
+          .optional()
+          .describe("Tour id whose fixture to seed before inspecting, from list_tours."),
+        fixture: z.string().optional().describe("Fixture name to seed. Overrides `tour`."),
       },
     },
-    async ({ route, preset: presetName, limit }) => {
+    async ({ route, preset: presetName, limit, tour: tourId, fixture }) => {
       const [name, preset] = resolvePreset(presetName);
       const { baseUrl } = await session.vite();
       const browser = await session.chrome();
 
-      const elements = await withAppPage(
+      const tours = await session.tours();
+      const tour = tourId ? tours.find((t) => t.id === tourId) : undefined;
+      if (tourId && !tour) {
+        throw new Error(
+          `Unknown tour "${tourId}". Available: ${tours.map((t) => t.id).join(", ")}`,
+        );
+      }
+      const fixtureName = fixture ?? tour?.tour.fixture;
+
+      const { elements, warnings } = await withAppPage(
         browser,
         baseUrl,
         config,
         { route: route ?? "/", preset },
-        (page) => inspectPage(page, limit ?? 100),
+        async (page) => {
+          const warnings = fixtureName
+            ? await applyPageFixture(page, config.root, fixtureName, tour?.id ?? fixtureName)
+            : [];
+          return { elements: await inspectPage(page, limit ?? 100), warnings };
+        },
       );
 
       return json({
         route: route ?? "/",
         preset: name,
+        fixture: fixtureName,
+        ...(warnings.length ? { fixtureWarnings: warnings } : {}),
         hint: "quality: stable = survives re-renders; ok = usable, but a data-shot attribute would be better; brittle = an absolute rect, will break.",
         elements,
       });
@@ -361,9 +384,13 @@ export async function runMcpServer(config: ResolvedConfig): Promise<void> {
           .optional()
           .describe("An inline Step, overriding `step`. Does not have to exist in any file."),
         preset: z.string().optional().describe("Viewport preset. Defaults to the first."),
+        fixture: z
+          .string()
+          .optional()
+          .describe("Fixture to seed before rendering. Defaults to the tour's own `fixture`."),
       },
     },
-    async ({ tour: tourId, step: stepIndex, spec, preset: presetName }) => {
+    async ({ tour: tourId, step: stepIndex, spec, preset: presetName, fixture }) => {
       const [name, preset] = resolvePreset(presetName);
 
       const tours = await session.tours();
@@ -395,13 +422,19 @@ export async function runMcpServer(config: ResolvedConfig): Promise<void> {
       const { baseUrl } = await session.vite();
       const browser = await session.chrome();
       const route = step.route ?? "/";
+      const fixtureName = fixture ?? tour?.tour.fixture;
 
-      const { png, warnings } = await withAppPage(
+      const { png, warnings, fixtureWarnings } = await withAppPage(
         browser,
         baseUrl,
         config,
         { route, preset },
         async (page) => {
+          // Seed first: a step that points at data-dependent UI can only
+          // resolve once the data the tour promises is actually there.
+          const fixtureWarnings = fixtureName
+            ? await applyPageFixture(page, config.root, fixtureName, tour?.id ?? fixtureName)
+            : [];
           const warnings = await applyStepPreview(page, config.root, step, {
             index,
             total,
@@ -410,13 +443,15 @@ export async function runMcpServer(config: ResolvedConfig): Promise<void> {
           const png = await page.screenshot({
             animations: config.stabilize.animations === "disable" ? "disabled" : "allow",
           });
-          return { png, warnings };
+          return { png, warnings, fixtureWarnings };
         },
       );
 
+      const seeded = fixtureName ? ` Fixture "${fixtureName}" seeded.` : "";
+      const fixtureNote = fixtureWarnings.length ? `\n${fixtureWarnings.join("\n")}` : "";
       const caption = warnings.length
-        ? `Step preview at ${route} (${name}). The target DID NOT RESOLVE:\n- ${warnings.join("\n- ")}\nUse inspect_app to find selectors that exist on this route.`
-        : `Step preview at ${route} (${name}). The target resolved.`;
+        ? `Step preview at ${route} (${name}).${seeded} The target DID NOT RESOLVE:\n- ${warnings.join("\n- ")}\nUse inspect_app to find selectors that exist on this route.${fixtureNote}`
+        : `Step preview at ${route} (${name}).${seeded} The target resolved.${fixtureNote}`;
 
       return image(png, caption);
     },

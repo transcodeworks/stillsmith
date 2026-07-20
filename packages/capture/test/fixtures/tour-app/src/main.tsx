@@ -1,7 +1,7 @@
-import { startTour } from "@stillsmith/tour";
-import { StrictMode, useEffect, useState } from "react";
+import { registerTourFixtures, startTour } from "@stillsmith/tour";
+import { StrictMode, useEffect, useState, useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
-import { Onboarding } from "./tours/onboarding.tour.js";
+import { Onboarding, Seeded } from "./tours/onboarding.tour.js";
 
 /**
  * A deliberately tiny SPA with the two things a tour engine must survive:
@@ -14,10 +14,46 @@ function navigate(path: string) {
   window.dispatchEvent(new PopStateEvent("popstate"));
 }
 
+/**
+ * Specimens start empty — the "fresh project" a fixture exists to fill. Kept
+ * outside React so a fixture can seed it before anything has mounted.
+ */
+const specimens = {
+  ids: [] as string[],
+  subs: new Set<() => void>(),
+  get(): string[] {
+    return specimens.ids;
+  },
+  subscribe(cb: () => void): () => void {
+    specimens.subs.add(cb);
+    return () => specimens.subs.delete(cb);
+  },
+  set(ids: string[]) {
+    specimens.ids = ids;
+    for (const cb of specimens.subs) cb();
+  },
+};
+
+registerTourFixtures({
+  "seed-specimens": {
+    setup() {
+      // Idempotent by construction: a resumed tour seeds the same list again.
+      specimens.set(["obsidian"]);
+      return () => specimens.set([]);
+    },
+  },
+});
+
 function Home() {
+  const ids = useSyncExternalStore(specimens.subscribe, specimens.get);
   return (
     <main>
       <h1>Pebbles</h1>
+      {ids.map((id) => (
+        <article key={id} data-shot={`specimen-${id}`}>
+          {id}
+        </article>
+      ))}
       <input data-shot="search" placeholder="Search rocks" />
       <button type="button" onClick={() => navigate("/settings")}>
         Settings
@@ -65,6 +101,6 @@ createRoot(rootEl).render(
 );
 
 // The e2e suite opts in per page-load; a bare visit stays quiet.
-if (new URLSearchParams(window.location.search).has("tour")) {
-  startTour(Onboarding);
-}
+const wanted = new URLSearchParams(window.location.search).get("tour");
+if (wanted === "seeded") startTour(Seeded);
+else if (wanted !== null) startTour(Onboarding);

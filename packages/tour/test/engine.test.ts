@@ -5,6 +5,7 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTour } from "../src/engine.js";
+import { registerTourFixtures } from "../src/fixtures.js";
 import type { RouterAdapter, StorageLike, Tour } from "../src/types.js";
 
 function memoryStorage(): StorageLike & { map: Map<string, string> } {
@@ -263,5 +264,327 @@ describe("tour engine", () => {
     await settle();
     expect(tour.stepIndex).toBe(1);
     tour.destroy();
+  });
+});
+
+describe("tour fixtures", () => {
+  /** A tour whose only step targets an element the fixture has to create. */
+  const SEEDED: Tour = {
+    id: "seeded",
+    fixture: "demo",
+    steps: [{ target: { selector: "#seeded" }, body: "Seeded data." }],
+  };
+
+  /** Appends the element `SEEDED` points at, and removes it on cleanup. */
+  function seedFixture() {
+    const setup = vi.fn(() => {
+      const el = document.createElement("div");
+      el.id = "seeded";
+      document.body.append(el);
+      return () => el.remove();
+    });
+    return { setup };
+  }
+
+  afterEach(() => {
+    document.body.innerHTML = "";
+    // The registry is a window property; one test's handlers must not answer
+    // the next test's lookups.
+    delete (window as { __stillsmithTourFixtures?: unknown }).__stillsmithTourFixtures;
+  });
+
+  it("seeds before the first step and undoes it on completion", async () => {
+    const fixture = seedFixture();
+    const tour = createTour(SEEDED, {
+      router: fakeRouter(),
+      storage: null,
+      fixtures: { demo: fixture },
+      waitTimeoutMs: 200,
+    });
+
+    tour.start();
+    await settle();
+    expect(fixture.setup).toHaveBeenCalledTimes(1);
+    // The step resolved against an element that only the fixture created.
+    expect(query("body")?.textContent).toBe("Seeded data.");
+    expect(document.querySelector("#seeded")).not.toBeNull();
+
+    tour.next(); // past the last step: completes
+    await settle();
+    expect(tour.active).toBe(false);
+    expect(document.querySelector("#seeded")).toBeNull();
+  });
+
+  it.each([
+    ["stop()", (t: ReturnType<typeof createTour>) => t.stop()],
+    ["destroy()", (t: ReturnType<typeof createTour>) => t.destroy()],
+    [
+      "Escape",
+      () => document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true })),
+    ],
+  ])("undoes the fixture when the tour ends via %s", async (_label, end) => {
+    const fixture = seedFixture();
+    const tour = createTour(SEEDED, {
+      router: fakeRouter(),
+      storage: null,
+      fixtures: { demo: fixture },
+      waitTimeoutMs: 200,
+    });
+    tour.start();
+    await settle();
+
+    end(tour);
+    await settle();
+    expect(document.querySelector("#seeded")).toBeNull();
+  });
+
+  it("undoes the fixture exactly once", async () => {
+    const cleanup = vi.fn();
+    const tour = createTour(SEEDED, {
+      router: fakeRouter(),
+      storage: null,
+      fixtures: { demo: { setup: () => cleanup } },
+      waitTimeoutMs: 200,
+    });
+    tour.start();
+    await settle();
+
+    tour.stop();
+    tour.destroy();
+    tour.destroy();
+    await settle();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the fixture up across step changes", async () => {
+    const cleanup = vi.fn();
+    const tour = createTour(
+      { ...SEEDED, steps: [{ body: "one" }, { body: "two" }] },
+      { router: fakeRouter(), storage: null, fixtures: { demo: { setup: () => cleanup } } },
+    );
+    tour.start();
+    await settle();
+    tour.next();
+    await settle();
+    tour.back();
+    await settle();
+    expect(cleanup).not.toHaveBeenCalled();
+    tour.destroy();
+  });
+
+  it("waits for an async setup before showing the first step", async () => {
+    const tour = createTour(SEEDED, {
+      router: fakeRouter(),
+      storage: null,
+      waitTimeoutMs: 400,
+      fixtures: {
+        demo: {
+          setup: async () => {
+            await new Promise((r) => setTimeout(r, 120));
+            const el = document.createElement("div");
+            el.id = "seeded";
+            document.body.append(el);
+          },
+        },
+      },
+    });
+
+    tour.start();
+    await settle(40);
+    expect(query("tooltip")).toBeNull(); // still seeding
+    await settle(300);
+    expect(query("body")?.textContent).toBe("Seeded data.");
+    tour.destroy();
+  });
+
+  it("prefers a cleanup returned by setup over the teardown handler", async () => {
+    const returned = vi.fn();
+    const teardown = vi.fn();
+    const tour = createTour(
+      { ...SEEDED, steps: [{ body: "one" }] },
+      {
+        router: fakeRouter(),
+        storage: null,
+        fixtures: { demo: { setup: () => returned, teardown } },
+      },
+    );
+    tour.start();
+    await settle();
+    tour.stop();
+    await settle();
+    expect(returned).toHaveBeenCalledTimes(1);
+    expect(teardown).not.toHaveBeenCalled();
+  });
+
+  it("falls back to the teardown handler when setup returns nothing", async () => {
+    const teardown = vi.fn();
+    const tour = createTour(
+      { ...SEEDED, steps: [{ body: "one" }] },
+      {
+        router: fakeRouter(),
+        storage: null,
+        fixtures: { demo: { setup: () => {}, teardown } },
+      },
+    );
+    tour.start();
+    await settle();
+    tour.stop();
+    await settle();
+    expect(teardown).toHaveBeenCalledTimes(1);
+    // The context names the tour, so one handler can serve several.
+    expect(teardown.mock.calls[0]?.[0]).toMatchObject({ tourId: "seeded" });
+  });
+
+  it("ends the tour on an unregistered fixture, persisting nothing", async () => {
+    const storage = memoryStorage();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const tour = createTour(SEEDED, { router: fakeRouter(), storage });
+
+    tour.start();
+    await settle();
+    expect(tour.active).toBe(false);
+    expect(warn.mock.calls[0]?.[0]).toContain("not registered");
+    // Nothing was written at all: setup runs before the first step persists, so
+    // a misconfigured app doesn't burn the tour's one shot.
+    expect(storage.map.size).toBe(0);
+    warn.mockRestore();
+  });
+
+  it("ends the tour when setup throws, persisting nothing", async () => {
+    const storage = memoryStorage();
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const tour = createTour(SEEDED, {
+      router: fakeRouter(),
+      storage,
+      fixtures: {
+        demo: {
+          setup: () => {
+            throw new Error("no database");
+          },
+        },
+      },
+    });
+
+    tour.start();
+    await settle();
+    expect(tour.active).toBe(false);
+    expect(warn.mock.calls[0]?.[0]).toContain("no database");
+    expect(storage.map.size).toBe(0);
+    warn.mockRestore();
+  });
+
+  it("warns but keeps going when teardown fails", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const tour = createTour(
+      { ...SEEDED, steps: [{ body: "one" }] },
+      {
+        router: fakeRouter(),
+        storage: null,
+        fixtures: {
+          demo: {
+            setup: () => () => {
+              throw new Error("cleanup exploded");
+            },
+          },
+        },
+      },
+    );
+    tour.start();
+    await settle();
+    expect(() => tour.stop()).not.toThrow();
+    await settle();
+    expect(warn.mock.calls.at(-1)?.[0]).toContain("cleanup exploded");
+    warn.mockRestore();
+  });
+
+  it("seeds again when a tour resumes mid-way", async () => {
+    const storage = memoryStorage();
+    storage.map.set("stillsmith-tour:seeded", JSON.stringify({ status: "active", step: 1, at: 0 }));
+    const fixture = seedFixture();
+    const tour = createTour(
+      { ...SEEDED, steps: [{ body: "one" }, { target: { selector: "#seeded" }, body: "two" }] },
+      { router: fakeRouter(), storage, fixtures: { demo: fixture }, waitTimeoutMs: 200 },
+    );
+
+    tour.start();
+    await settle();
+    expect(fixture.setup).toHaveBeenCalledTimes(1);
+    expect(tour.stepIndex).toBe(1);
+    expect(query("body")?.textContent).toBe("two");
+    tour.destroy();
+  });
+
+  it("leaves nothing behind when the tour is destroyed mid-setup", async () => {
+    const cleanup = vi.fn();
+    const tour = createTour(SEEDED, {
+      router: fakeRouter(),
+      storage: null,
+      fixtures: {
+        demo: {
+          setup: async () => {
+            await new Promise((r) => setTimeout(r, 100));
+            return cleanup;
+          },
+        },
+      },
+    });
+
+    tour.start();
+    await settle(20);
+    tour.destroy(); // seeding is still in flight
+    await settle(200);
+    // The seed landed after the tour ended, so the engine undid it anyway.
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(query("tooltip")).toBeNull();
+  });
+
+  it("prefers option fixtures over the window registry", async () => {
+    const registered = vi.fn();
+    const passed = vi.fn();
+    registerTourFixtures({ demo: { setup: registered } }, window);
+    const tour = createTour(
+      { ...SEEDED, steps: [{ body: "one" }] },
+      { router: fakeRouter(), storage: null, fixtures: { demo: { setup: passed } } },
+    );
+
+    tour.start();
+    await settle();
+    expect(passed).toHaveBeenCalledTimes(1);
+    expect(registered).not.toHaveBeenCalled();
+    tour.destroy();
+  });
+
+  it("falls back to the window registry when no option is passed", async () => {
+    const fixture = seedFixture();
+    registerTourFixtures({ demo: fixture }, window);
+    const tour = createTour(SEEDED, {
+      router: fakeRouter(),
+      storage: null,
+      waitTimeoutMs: 200,
+    });
+
+    tour.start();
+    await settle();
+    expect(fixture.setup).toHaveBeenCalledTimes(1);
+    expect(query("body")?.textContent).toBe("Seeded data.");
+    tour.destroy();
+  });
+
+  it("never seeds a tour the user already finished", async () => {
+    const storage = memoryStorage();
+    storage.map.set(
+      "stillsmith-tour:seeded",
+      JSON.stringify({ status: "completed", step: 0, at: 0 }),
+    );
+    const fixture = seedFixture();
+    const tour = createTour(SEEDED, {
+      router: fakeRouter(),
+      storage,
+      fixtures: { demo: fixture },
+    });
+
+    tour.start();
+    await settle();
+    expect(fixture.setup).not.toHaveBeenCalled();
   });
 });

@@ -7,9 +7,14 @@ import type { Tour } from "@stillsmith/tour";
  *
  * Authored in `stillsmith dev` (tours mode) or by hand; either way this file is
  * the artifact — type-checked, reviewed, shipped.
+ *
+ * `fixture` names the demo data the tour needs: a brand-new shelf has nothing
+ * on it, and a tour of an empty shelf shows nothing. `main.tsx` registers what
+ * the name means; the engine seeds it before step one and clears it at the end.
  */
 export const Onboarding = {
   id: "pebble-onboarding",
+  fixture: "demo-rocks",
   steps: [
     {
       title: "Welcome to Pebble",
@@ -25,6 +30,11 @@ export const Onboarding = {
       title: "Pick a rock",
       body: "Click Obsidian to open it in the inspector.",
       advance: { on: "click" },
+    },
+    {
+      target: { selector: "[data-shot='rock-demo-agate']" },
+      title: "Seeded for the tour",
+      body: "This agate is demo data. It arrives with the tour and leaves with it.",
     },
     {
       target: { selector: "[data-shot='polish']" },

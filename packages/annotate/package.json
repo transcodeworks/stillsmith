@@ -1,6 +1,6 @@
 {
   "name": "@stillsmith/annotate",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "stillsmith's annotation core: the Target/anchor model, the DOM overlay drawer, and target suggestion. Shared by @stillsmith/capture and @stillsmith/tour (runtime).",
   "license": "MIT",
   "repository": {

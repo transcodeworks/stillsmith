@@ -1,6 +1,6 @@
 {
   "name": "@stillsmith/tour",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Guided onboarding tours, defined as code in your repo. The production runtime for tours authored with stillsmith.",
   "license": "MIT",
   "repository": {

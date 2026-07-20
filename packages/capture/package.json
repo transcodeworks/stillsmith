@@ -1,6 +1,6 @@
 {
   "name": "@stillsmith/capture",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Capture product screenshots from your real components. Declare scenes alongside your code; stillsmith drives a browser and writes the images.",
   "license": "MIT",
   "repository": {

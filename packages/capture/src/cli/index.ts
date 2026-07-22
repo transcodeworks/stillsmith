@@ -20,7 +20,7 @@ const USAGE = `stillsmith — screenshots from your real components
 
 Usage
   stillsmith init                  scaffold stillsmith.config.ts, a setup file, and an example scene
-  stillsmith dev                   serve the scenes for browsing
+  stillsmith dev                   serve the scenes for browsing (no authoring GUI)
   stillsmith plan [filters]        print what would be captured
   stillsmith capture [filters]     capture and write images
   stillsmith install               install the Playwright Chromium build
@@ -94,9 +94,11 @@ async function main(): Promise<void> {
 
   if (command === "dev") {
     const { baseUrl } = await startServer(config);
-    console.log(`  authoring GUI   ${baseUrl}author`);
-    console.log(`  scenes          ${baseUrl}`);
-    console.log("\nPress Ctrl-C to stop.");
+    console.log(`  scenes   ${baseUrl}`);
+    console.log(
+      "\nFor the visual authoring GUI, install @stillsmith/studio and run `stillsmith-studio`.",
+    );
+    console.log("Press Ctrl-C to stop.");
     return; // The Vite server keeps the process alive.
   }
 

@@ -1,4 +1,5 @@
 import { defineConfig } from "@stillsmith/capture/react";
+import { stillsmithStudio } from "@stillsmith/studio";
 
 // The app's own stylesheet, through the app's own `@` alias. In Node this
 // resolves to an empty stub; in the browser it goes through the app's real CSS
@@ -9,6 +10,12 @@ export default defineConfig({
   scenes: ["src/**/*.scene.tsx"],
   tours: ["src/tours/*.tour.ts"],
   vite: "./vite.config.ts",
+
+  // The authoring routes, mounted even during `stillsmith capture`: the
+  // authoring scene below screenshots the studio itself, and its App fetches
+  // the real /__stillsmith/api/state. `stillsmith-studio` would add this
+  // plugin anyway; capture would not.
+  viteOverrides: { plugins: [stillsmithStudio()] },
 
   presets: {
     docs: { width: 1280, height: 800, dpr: 2, colorScheme: "dark" },

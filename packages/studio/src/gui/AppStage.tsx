@@ -22,6 +22,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { suggestTarget } from "@stillsmith/annotate";
 import type { Offset, Target, TargetSuggestion } from "@stillsmith/annotate";
 import {
+  applyTourFixture,
   createHistoryRouter,
   renderStepPreview,
   startTour,
@@ -85,6 +86,43 @@ export function AppStage({
 
   // The frame navigates by src; typing a route and hitting go re-anchors it.
   useEffect(() => setRouteDraft(route), [route]);
+
+  /**
+   * Seed the tour's fixture into the frame, so steps that point at
+   * data-dependent elements have something to point at while you author them.
+   *
+   * Only while *not* playing: the engine seeds and cleans up its own fixture
+   * during a play-through. Setup is contractually idempotent, so the handover
+   * either way is safe. A frame reload resets the app anyway; the cleanup here
+   * covers switching tours within one frame.
+   */
+  const fixture = tour?.fixture;
+  const tourIdForFixture = tour?.id;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: frameNonce re-seeds the reloaded document
+  useEffect(() => {
+    const frame = frameRef.current;
+    const doc = frame?.contentDocument;
+    const win = frame?.contentWindow;
+    if (!doc || !win || !fixture || playing) return;
+
+    let cancelled = false;
+    let cleanup: (() => void | Promise<void>) | null = null;
+
+    void applyTourFixture(fixture, {
+      root: { doc, win },
+      tourId: tourIdForFixture ?? fixture,
+    }).then((result) => {
+      if (result.warning) onWarnings?.([result.warning]);
+      // Unmounted while seeding: undo it rather than leave demo data behind.
+      if (cancelled) void result.teardown?.();
+      else cleanup = result.teardown;
+    });
+
+    return () => {
+      cancelled = true;
+      void cleanup?.();
+    };
+  }, [fixture, tourIdForFixture, playing, frameNonce, onWarnings]);
 
   /**
    * Live preview of the selected step. There is no `data-stillsmith-ready`

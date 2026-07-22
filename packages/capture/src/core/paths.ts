@@ -59,9 +59,6 @@ export function fsUrl(abs: string): string {
   return `/@fs/${abs.replace(/\\/g, "/").replace(/^\/+/, "")}`;
 }
 
-/** The prebuilt authoring GUI, served as a static asset by the dev server. */
-export const AUTHOR_APP_PATH = path.join(PACKAGE_ROOT, "dist", "author", "app.js");
-
 export function assertRuntimeBuilt(framework: string): void {
   const runtime = runtimePath(framework);
   if (existsSync(runtime)) return;

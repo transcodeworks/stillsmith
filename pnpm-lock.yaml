@@ -247,6 +247,9 @@ importers:
       '@stillsmith/capture':
         specifier: workspace:*
         version: link:../../packages/capture
+      '@stillsmith/studio':
+        specifier: workspace:*
+        version: link:../../packages/studio
       '@types/react':
         specifier: ^19
         version: 19.2.17
@@ -280,15 +283,12 @@ importers:
       esbuild:
         specifier: ^0.28.1
         version: 0.28.1
-      react-resizable-panels:
-        specifier: ^4.12.2
-        version: 4.12.2(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
       tinyglobby:
         specifier: ^0.2.10
         version: 0.2.17
-      ts-morph:
-        specifier: ^28.0.0
-        version: 28.0.0
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
       vite:
         specifier: ^8.1.5
         version: 8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0)
@@ -320,9 +320,6 @@ importers:
       tsup:
         specifier: ^8.3.0
         version: 8.5.1(jiti@2.7.0)(postcss@8.5.19)(typescript@5.9.3)
-      typescript:
-        specifier: ^5.9.2
-        version: 5.9.3
       vitest:
         specifier: ^4.1.10
         version: 4.1.10(@types/node@24.13.3)(jsdom@28.1.0)(vite@8.1.5(@types/node@24.13.3)(esbuild@0.28.1)(jiti@2.7.0))

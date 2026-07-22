@@ -29,10 +29,10 @@ function findPackageRoot(from: string): string {
   }
 }
 
+/** Absolute path to the installed @stillsmith/studio package. Vite must
+ * allow-list this: under pnpm it's a symlink into the store, far outside the
+ * project tree. */
+export const STUDIO_ROOT = findPackageRoot(path.dirname(fileURLToPath(import.meta.url)));
+
 /** The prebuilt authoring GUI, served as a static asset by the dev server. */
-export const GUI_APP_PATH = path.join(
-  findPackageRoot(path.dirname(fileURLToPath(import.meta.url))),
-  "dist",
-  "gui",
-  "app.js",
-);
+export const GUI_APP_PATH = path.join(STUDIO_ROOT, "dist", "gui", "app.js");

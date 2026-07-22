@@ -59,8 +59,10 @@ export async function deleteShot(file: string, exportName: string): Promise<void
 }
 
 /** The tour fields the GUI owns. Tour-level metadata (id, storageKey, theme)
- * is code the author writes once; the editor's job is the steps. */
-export type EditableTour = Pick<Tour, "steps">;
+ * is code the author writes once; the editor's job is the steps — plus
+ * `fixture`, which is here because you cannot target seeded elements in the
+ * stage without saying which fixture seeds them. */
+export type EditableTour = Pick<Tour, "steps" | "fixture">;
 
 export async function saveTour(
   file: string,

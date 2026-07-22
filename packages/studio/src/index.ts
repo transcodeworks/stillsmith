@@ -21,6 +21,15 @@ export function stillsmithStudio(): Plugin {
     name: "stillsmith:studio",
     apply: "serve",
 
+    // Allow-list studio's own package root, mirroring what capture does for
+    // its runtime: under pnpm the package is a symlink into the store, outside
+    // every default fs.allow root. (Dynamic import keeps this entry
+    // browser-inert; config hooks only ever run in Node.)
+    async config() {
+      const { STUDIO_ROOT } = await import("./paths.js");
+      return { server: { fs: { allow: [STUDIO_ROOT] } } };
+    },
+
     async configureServer(server) {
       // Idempotent: the CLI adds this plugin, and a config's viteOverrides may
       // add it again. The first instance mounts; the twin becomes a no-op.

@@ -8,14 +8,14 @@
  * `/__stillsmith/api` and its iframe loads a real scene. Nothing here is mocked: if
  * the GUI changes, this screenshot changes with it.
  *
- * It reaches into stillsmith's source by relative path. That's a liberty only
- * available because we're inside stillsmith's own monorepo — the authoring GUI is not
- * a public export, and shouldn't be.
+ * It reaches into @stillsmith/studio's source by relative path. That's a liberty
+ * only available because we're inside stillsmith's own monorepo — the authoring
+ * GUI is not a public export, and shouldn't be.
  */
 import type { Scene, Shot } from "@stillsmith/capture/react";
 
-import { App } from "../../../../packages/capture/src/author/App";
-import { STYLES } from "../../../../packages/capture/src/author/styles";
+import { App } from "../../../../packages/studio/src/gui/App";
+import { STYLES } from "../../../../packages/studio/src/gui/styles";
 
 export default {
   id: "stillsmith-authoring",

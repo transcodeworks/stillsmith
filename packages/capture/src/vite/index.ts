@@ -1,10 +1,8 @@
-import fs from "node:fs/promises";
 import type { Plugin } from "vite";
 
 import { findSceneFiles } from "../core/discover.js";
-import { AUTHOR_APP_PATH, assertRuntimeBuilt, fsUrl, runtimePath } from "../core/paths.js";
+import { assertRuntimeBuilt, fsUrl, runtimePath } from "../core/paths.js";
 import type { ResolvedConfig } from "../types.js";
-import { apiMiddleware } from "./api.js";
 
 const ENTRY_ID = "virtual:stillsmith/entry";
 const RESOLVED_ENTRY_ID = `\0${ENTRY_ID}`;
@@ -17,22 +15,6 @@ const SHELL = `<!doctype html>
   <body style="margin:0">
     <div id="root"></div>
     <script type="module" src="${ENTRY_URL}"></script>
-  </body>
-</html>
-`;
-
-/**
- * The authoring GUI's shell. Its script is stillsmith's own prebuilt bundle, served
- * from disk — NOT compiled through the consumer's Vite, which only ever handles
- * their scenes. The GUI loads those scenes in a same-origin iframe, which is what
- * lets it draw live annotation previews straight into the frame's document.
- */
-const AUTHOR_SHELL = `<!doctype html>
-<html>
-  <head><meta charset="utf-8" /><title>stillsmith · author</title></head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/__stillsmith/author/app.js"></script>
   </body>
 </html>
 `;
@@ -118,34 +100,8 @@ export function stillsmith(config: ResolvedConfig): Plugin {
       server.watcher.on("add", onFileAddedOrRemoved);
       server.watcher.on("unlink", onFileAddedOrRemoved);
 
-      // The authoring GUI's backend. Mounted first so /__stillsmith/api/* never
-      // falls through to the scene-runtime shell below.
-      server.middlewares.use(apiMiddleware(server, config));
-
       server.middlewares.use(async (req, res, next) => {
         const pathname = new URL(req.url ?? "/", "http://localhost").pathname;
-
-        // The GUI's prebuilt bundle, straight off disk.
-        if (pathname === "/__stillsmith/author/app.js") {
-          try {
-            const js = await fs.readFile(AUTHOR_APP_PATH, "utf8");
-            res.setHeader("Content-Type", "text/javascript");
-            res.end(js);
-          } catch {
-            res.statusCode = 500;
-            res.end(
-              `// stillsmith: authoring GUI missing at ${AUTHOR_APP_PATH}\n` +
-                "// If you're working on stillsmith itself, run `pnpm build`.",
-            );
-          }
-          return;
-        }
-
-        if (pathname === "/__stillsmith/author" || pathname === "/__stillsmith/author/") {
-          res.setHeader("Content-Type", "text/html");
-          res.end(AUTHOR_SHELL);
-          return;
-        }
 
         if (pathname !== "/__stillsmith" && pathname !== "/__stillsmith/") return next();
 

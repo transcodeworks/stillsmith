@@ -1,0 +1,67 @@
+{
+  "name": "@stillsmith/studio",
+  "version": "0.1.0",
+  "description": "The visual authoring studio for stillsmith: a dev-server GUI that edits shots and tours and writes them back into your TypeScript source.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/transcodeworks/stillsmith.git",
+    "directory": "packages/studio"
+  },
+  "homepage": "https://transcodeworks.github.io/stillsmith",
+  "bugs": {
+    "url": "https://github.com/transcodeworks/stillsmith/issues"
+  },
+  "type": "module",
+  "bin": {
+    "stillsmith-studio": "./bin/stillsmith-studio.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "keywords": [
+    "screenshots",
+    "annotations",
+    "authoring",
+    "vite",
+    "react",
+    "docs"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepare": "tsup"
+  },
+  "dependencies": {
+    "@stillsmith/annotate": "workspace:^",
+    "@stillsmith/capture": "workspace:^",
+    "@stillsmith/tour": "workspace:^",
+    "react-resizable-panels": "^4.12.2",
+    "ts-morph": "^28.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "playwright": "^1.48.0",
+    "react": "^19",
+    "react-dom": "^19",
+    "tsup": "^8.3.0",
+    "typescript": "^5.9.2",
+    "vite": "^8.1.5",
+    "vitest": "^4.1.10"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

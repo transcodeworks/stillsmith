@@ -79,7 +79,7 @@ guide under `docs/` and the package README in the same PR.
 ## Releases
 
 Published packages (`@stillsmith/annotate`, `@stillsmith/capture`,
-`@stillsmith/tour`) version together via
+`@stillsmith/studio`, `@stillsmith/tour`) version together via
 [Changesets](https://github.com/changesets/changesets).
 
 For any PR that should ship to npm, add a changeset with the code change:
@@ -103,14 +103,15 @@ Trusted Publisher → GitHub Actions:
 | Workflow filename | `release.yml` |
 | Allowed actions | `npm publish` |
 
-Configure that on all three packages. Docs-only and internal tooling changes do
+Configure that on all four packages. Docs-only and internal tooling changes do
 not need a changeset.
 
 ## What ships where
 
 | Path | What |
 | --- | --- |
-| `packages/capture` | `@stillsmith/capture`: CLI, Vite plugin, scene runtime, capture pipeline, authoring GUI, MCP server. |
+| `packages/capture` | `@stillsmith/capture`: CLI, Vite plugin, scene runtime, capture pipeline. |
+| `packages/studio` | `@stillsmith/studio`: the visual authoring GUI, save API, and codemod. |
 | `packages/tour` | `@stillsmith/tour`: the production tour runtime. |
 | `packages/annotate` | `@stillsmith/annotate`: the shared annotation core. |
 | `examples/rock-app` | A real consumer; doubles as the e2e fixture. |

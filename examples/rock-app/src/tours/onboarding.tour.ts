@@ -5,7 +5,7 @@ import type { Tour } from "@stillsmith/tour";
  * scenes photograph — the screenshot in the docs and the step in the app
  * point at the same element, and rot (or don't) together.
  *
- * Authored in `stillsmith dev` (tours mode) or by hand; either way this file is
+ * Authored in `stillsmith-studio` (tours mode) or by hand; either way this file is
  * the artifact — type-checked, reviewed, shipped.
  *
  * `fixture` names the demo data the tour needs: a brand-new shelf has nothing

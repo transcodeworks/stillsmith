@@ -52,9 +52,10 @@ stillsmith capture
   hidden — re-running produces byte-identical images, so CI diffs stay meaningful.
 - **Annotations baked into the pixels.** Outlines, highlights, arrows, callouts,
   and numbered labels are drawn as a DOM overlay just before the shutter.
-- **A visual authoring tool.** `stillsmith dev` renders the scene live and lets you
-  place annotations by clicking, and **drag them to fine-tune their position** —
-  then writes the change back into your `.scene.tsx` as a clean, reviewable diff.
+- **A visual authoring studio.** [`@stillsmith/studio`](./packages/studio) renders
+  the scene live and lets you place annotations by clicking, and **drag them to
+  fine-tune their position** — then writes the change back into your `.scene.tsx`
+  as a clean, reviewable diff.
 - **Your build config, reused.** stillsmith merges your app's Vite config rather than
   bringing its own — and when there is no Vite config (Next.js, CRA), it synthesizes
   one from your tsconfig paths and PostCSS setup, with shims for modules like
@@ -64,7 +65,7 @@ stillsmith capture
   agent authors them with its normal file tools and verifies with `stillsmith capture`.
 - **Guided tours, same bet.** [`@stillsmith/tour`](./packages/tour) runs onboarding
   tours from type-checked `.tour.ts` files in your repo, anchored on the same
-  `data-shot` selectors your screenshots use — authored visually in `stillsmith dev`
+  `data-shot` selectors your screenshots use — authored visually in the studio
   against your running app. See the [tours guide](https://transcodeworks.github.io/stillsmith/guides/tours/).
 
 ## Getting started
@@ -80,7 +81,15 @@ Then declare a scene next to a component, and capture it:
 ```bash
 stillsmith plan       # print what would be captured
 stillsmith capture    # write the images
-stillsmith dev        # browse scenes and author annotations visually
+stillsmith dev        # browse the scenes
+```
+
+For visual authoring — click to place annotations, drag to nudge them, Save to
+write the TypeScript — add the studio:
+
+```bash
+pnpm add -D @stillsmith/studio
+npx stillsmith-studio
 ```
 
 The **[package README](./packages/capture/README.md)** walks through declaring
@@ -99,7 +108,7 @@ The guides:
 | [Getting started](https://transcodeworks.github.io/stillsmith/start/getting-started/) | Install, first scene, first capture. |
 | [Scenes](https://transcodeworks.github.io/stillsmith/guides/scenes/) | Declaring scenes and shots. |
 | [Annotations](https://transcodeworks.github.io/stillsmith/guides/annotations/) | The five kinds, targets, and `offset`. |
-| [The authoring GUI](https://transcodeworks.github.io/stillsmith/guides/authoring/) | Placing and dragging annotations visually. |
+| [The authoring studio](https://transcodeworks.github.io/stillsmith/guides/authoring/) | Placing and dragging annotations visually. |
 | [Configuration](https://transcodeworks.github.io/stillsmith/guides/configuration/) | Presets, targets, and the one-file config. |
 | [CLI reference](https://transcodeworks.github.io/stillsmith/reference/cli/) | Every command and flag. |
 
@@ -107,7 +116,10 @@ The guides:
 
 | Path | What |
 | --- | --- |
-| [`packages/capture`](./packages/capture) | `@stillsmith/capture` — the published npm package: CLI, Vite plugin, scene runtime, capture pipeline, authoring GUI. |
+| [`packages/capture`](./packages/capture) | `@stillsmith/capture` — the capture toolchain: CLI, Vite plugin, scene runtime, capture pipeline. |
+| [`packages/studio`](./packages/studio) | `@stillsmith/studio` — the visual authoring studio: GUI, save API, and the codemod that writes TypeScript back. |
+| [`packages/tour`](./packages/tour) | `@stillsmith/tour` — the production tour runtime your app ships. |
+| [`packages/annotate`](./packages/annotate) | `@stillsmith/annotate` — the annotation drawing engine shared by capture and the studio. |
 | [`examples`](./examples) | A minimal consumer. Doubles as an end-to-end fixture: a real component, a real Vite config, real captures. |
 | [`docs`](./docs) | The documentation site. |
 

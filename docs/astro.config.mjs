@@ -33,7 +33,7 @@ export default defineConfig({
             { label: "Next.js & other hosts", slug: "guides/hosts" },
             { label: "Annotations", slug: "guides/annotations" },
             { label: "Guided tours", slug: "guides/tours" },
-            { label: "The authoring GUI", slug: "guides/authoring" },
+            { label: "The authoring studio", slug: "guides/authoring" },
           ],
         },
         {

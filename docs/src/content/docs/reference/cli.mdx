@@ -5,11 +5,23 @@ description: Every stillsmith command and flag.
 
 ```
 stillsmith init                  scaffold stillsmith.config.tsx and an example scene
-stillsmith dev                   scene browser + annotation authoring GUI
+stillsmith dev                   scene browser (no authoring GUI)
 stillsmith plan [filters]        print what would be captured
 stillsmith capture [filters]     capture and write PNGs
 stillsmith install               install the Playwright Chromium build
 ```
+
+## stillsmith-studio
+
+The visual [authoring studio](../guides/authoring/) is a separate package with
+its own bin:
+
+```
+stillsmith-studio [--config <path>]   scene browser + authoring GUI + save API
+```
+
+It starts the same dev server as `stillsmith dev` with the authoring routes
+mounted, and takes only `--config`.
 
 ## Filters
 

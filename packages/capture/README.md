@@ -185,37 +185,18 @@ tail stays put).
 
 ## Authoring annotations visually
 
+The visual authoring studio ships separately as
+[`@stillsmith/studio`](https://www.npmjs.com/package/@stillsmith/studio):
+
 ```bash
-stillsmith dev     # → http://localhost:5173/__stillsmith/author
+pnpm add -D @stillsmith/studio
+npx stillsmith-studio     # → http://localhost:5173/__stillsmith/author
 ```
 
-Pick a scene, a shot, and a preset; the scene renders live in an iframe at the
-preset's true pixel size. Click **pick** on a target and then click the element
-you mean — stillsmith infers the most stable selector it can (a `data-shot` first,
-then a stable id, then a `data-testid`, then text, and only as a last resort an
-absolute rect) and tells you how robust the choice is.
-
-**Drag to position.** Grab any annotation in the preview — a box, a callout, a
-label pin, an arrowhead — and drop it where you want it. The drag writes straight
-into that annotation's `offset`, so you fine-tune placement by eye instead of
-guessing `{ dx, dy }` and re-checking. Each kind moves the sensible thing (the
-box, the pin, or the arrowhead), and the offset fields update live.
-
-The preview is not a mock of the capture. It runs *the same drawing engine*
-against the iframe's document that runs against the page at capture time, so what
-you nudge here is what comes out of the PNG.
-
-**Save writes TypeScript back into your `.scene.tsx`.** It edits only the
-properties you actually changed, prints them compactly, and then runs your
-project's own formatter (Biome or Prettier, if you have one) — so changing one
-offset produces a one-line diff, not a reformatted file.
-
-Two limits worth knowing. A shot whose initialiser isn't an object literal (built
-by a helper call, say) is read-only — stillsmith refuses to rewrite what it can't
-understand rather than guessing. And a comment written *inside* a property that
-gets rewritten (between two annotations, for instance) is lost, because that
-property is regenerated from data; comments on the shot, the scene, and any
-untouched property survive.
+Pick a scene, place annotations by clicking, drag them to fine-tune their
+`offset`, and Save — the studio edits only the properties you changed in your
+`.scene.tsx`, formatted with your project's own formatter. Its preview runs the
+same drawing engine as the capture, so what you nudge is what ships.
 
 ## For agents
 
@@ -230,7 +211,7 @@ stillsmith plan                          # what would be captured
 stillsmith capture                       # every target
 stillsmith capture --target docs
 stillsmith capture --scene card --preset docs
-stillsmith dev                           # browse the scenes
+stillsmith dev                           # browse the scenes (no authoring GUI)
 ```
 
 Captures are deterministic — fonts are awaited, animations and transitions are

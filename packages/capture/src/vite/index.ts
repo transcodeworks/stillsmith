@@ -51,6 +51,11 @@ export function stillsmith(config: ResolvedConfig): Plugin {
     name: "stillsmith",
     apply: "serve",
 
+    // Vite's inter-plugin handshake: companion plugins (@stillsmith/studio) find
+    // this plugin by name and read the resolved config here, so they take no
+    // config of their own and never load it twice.
+    api: { config },
+
     async buildStart() {
       assertRuntimeBuilt(config.framework);
       sceneFiles = await findSceneFiles(config);

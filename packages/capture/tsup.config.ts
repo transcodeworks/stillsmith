@@ -17,6 +17,9 @@ export default defineConfig([
   {
     entry: {
       index: "src/index.ts",
+      // The Node-side toolchain API — server, discovery, config loading — for
+      // companion packages like @stillsmith/studio.
+      node: "src/node.ts",
       // The React binding: types + defineConfig. Type-only React import, so it's
       // safe to load in Node when the config imports it.
       "react/index": "src/react/index.ts",

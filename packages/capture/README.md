@@ -10,8 +10,8 @@ Hand-composed mockups drift from the product and manual screenshots go stale
 silently. A scene renders the real component over fixture data, so when a prop
 changes, the scene fails to compile instead of quietly lying in your docs.
 
-> **Status: early development.** Capture, annotations, the visual authoring tool,
-> and the MCP server work end to end, but APIs may still change.
+> **Status: early development.** Capture, annotations, and the visual authoring
+> tool work end to end, but APIs may still change.
 
 ## Install
 
@@ -217,29 +217,11 @@ gets rewritten (between two annotations, for instance) is lost, because that
 property is regenerated from data; comments on the shot, the scene, and any
 untouched property survive.
 
-## For agents (MCP)
+## For agents
 
-```bash
-stillsmith mcp                                  # stdio MCP server
-claude mcp add stillsmith -- npx stillsmith mcp    # e.g. with Claude Code
-```
-
-An agent already edits `*.scene.tsx` perfectly well with its normal file tools,
-so stillsmith doesn't offer tools to write shots. What an agent *can't* do is see
-the rendered scene or know what's targetable — left to itself it invents
-`target: { selector: ".card-title" }` and the annotation silently fails to
-resolve at capture. These five tools close exactly that gap:
-
-| Tool | What it gives the agent |
-| --- | --- |
-| `list_scenes` | Scenes, their shots, the presets and targets. |
-| `inspect_scene` | **The important one.** Renders the scene and returns selectors that are *known to exist*, ranked by how well they survive a re-render, with tag, role, text and rect. |
-| `preview` | Renders an **unsaved** shot passed inline and returns the PNG — so the agent can *look* before writing anything to a file. Unresolved targets come back as a loud warning, not a silent blank. |
-| `capture` | Runs the real pipeline. |
-| `plan` | Dry run. |
-
-That's the same loop the human authoring GUI provides — propose, render, look,
-refine — with the save step being an ordinary file edit.
+Scenes and shots are ordinary TypeScript files, so an agent works with its
+normal file tools: edit the `*.scene.tsx`, run `stillsmith capture`, look at the
+image, refine. `stillsmith plan` is the dry run.
 
 ## Capture
 

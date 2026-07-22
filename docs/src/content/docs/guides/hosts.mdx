@@ -106,8 +106,7 @@ through stillsmith's own server; `appUrl` only affects app pages.
 <Aside type="note" title="Live preview in the GUI is same-origin only">
 With a cross-origin `appUrl`, the authoring GUI can't draw live step previews
 into the app's frame — the browser forbids it. The GUI tells you when this is
-the case; use the MCP `preview_step` tool, which renders through Playwright and
-doesn't care about origins.
+the case; the tour still runs normally in your app itself.
 </Aside>
 
 ## Limitations

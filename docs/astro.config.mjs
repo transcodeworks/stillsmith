@@ -34,7 +34,6 @@ export default defineConfig({
             { label: "Annotations", slug: "guides/annotations" },
             { label: "Guided tours", slug: "guides/tours" },
             { label: "The authoring GUI", slug: "guides/authoring" },
-            { label: "Agents (MCP)", slug: "guides/mcp" },
           ],
         },
         {

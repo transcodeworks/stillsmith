@@ -76,18 +76,6 @@ async function main(): Promise<void> {
     return;
   }
 
-  if (command === "mcp") {
-    // Loaded lazily: the MCP SDK is dead weight for every other command, and
-    // this keeps `stillsmith capture` startup lean.
-    const [{ runMcpServer }, config] = await Promise.all([
-      import("../mcp/server.js"),
-      loadConfig(values.config),
-    ]);
-    console.error(formatHostReport(config.hostReport));
-    await runMcpServer(config);
-    return; // stdio transport keeps the process alive.
-  }
-
   if (command === "install") {
     const result = spawnSync("npx", ["playwright", "install", "chromium"], { stdio: "inherit" });
     process.exitCode = result.status ?? 1;

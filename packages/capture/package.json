@@ -55,14 +55,12 @@
     "prepare": "tsup"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
     "@stillsmith/annotate": "workspace:^",
     "esbuild": "^0.28.1",
     "react-resizable-panels": "^4.12.2",
     "tinyglobby": "^0.2.10",
     "ts-morph": "^28.0.0",
-    "vite": "^8.1.5",
-    "zod": "^4.4.3"
+    "vite": "^8.1.5"
   },
   "peerDependencies": {
     "playwright": ">=1.44",

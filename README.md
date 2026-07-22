@@ -60,8 +60,8 @@ stillsmith capture
   one from your tsconfig paths and PostCSS setup, with shims for modules like
   `next/image` and `next/font`. Either way a scene imports a real component and
   just works.
-- **Agent-ready.** A built-in MCP server lets an AI agent inspect a scene, preview
-  a proposed annotation, and see the result before writing a line.
+- **Agent-ready.** Scenes, shots, and tours are plain TypeScript files, so an AI
+  agent authors them with its normal file tools and verifies with `stillsmith capture`.
 - **Guided tours, same bet.** [`@stillsmith/tour`](./packages/tour) runs onboarding
   tours from type-checked `.tour.ts` files in your repo, anchored on the same
   `data-shot` selectors your screenshots use — authored visually in `stillsmith dev`
@@ -101,14 +101,13 @@ The guides:
 | [Annotations](https://transcodeworks.github.io/stillsmith/guides/annotations/) | The five kinds, targets, and `offset`. |
 | [The authoring GUI](https://transcodeworks.github.io/stillsmith/guides/authoring/) | Placing and dragging annotations visually. |
 | [Configuration](https://transcodeworks.github.io/stillsmith/guides/configuration/) | Presets, targets, and the one-file config. |
-| [MCP](https://transcodeworks.github.io/stillsmith/guides/mcp/) | Driving stillsmith from an agent. |
 | [CLI reference](https://transcodeworks.github.io/stillsmith/reference/cli/) | Every command and flag. |
 
 ## Repository layout
 
 | Path | What |
 | --- | --- |
-| [`packages/capture`](./packages/capture) | `@stillsmith/capture` — the published npm package: CLI, Vite plugin, scene runtime, capture pipeline, authoring GUI, MCP server. |
+| [`packages/capture`](./packages/capture) | `@stillsmith/capture` — the published npm package: CLI, Vite plugin, scene runtime, capture pipeline, authoring GUI. |
 | [`examples`](./examples) | A minimal consumer. Doubles as an end-to-end fixture: a real component, a real Vite config, real captures. |
 | [`docs`](./docs) | The documentation site. |
 
@@ -136,9 +135,9 @@ The example depends on `stillsmith` via `workspace:*`, so `pnpm build` then
 ## Status
 
 stillsmith is in early development. APIs, CLI flags, and package boundaries may
-change without a major version bump. Capture, annotations, the visual authoring
-tool, and the MCP server already work end to end — expect rough edges and
-incomplete docs while things settle.
+change without a major version bump. Capture, annotations, and the visual
+authoring tool already work end to end — expect rough edges and incomplete
+docs while things settle.
 
 ## License
 

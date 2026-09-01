@@ -44,12 +44,21 @@
   },
   "dependencies": {
     "@stillsmith/annotate": "workspace:^",
-    "@stillsmith/capture": "workspace:^",
     "@stillsmith/tour": "workspace:^",
     "react-resizable-panels": "^4.12.2",
     "ts-morph": "^28.0.0"
   },
+  "peerDependencies": {
+    "@stillsmith/capture": "workspace:^",
+    "vite": "^8.1.5"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@stillsmith/capture": "workspace:^",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",

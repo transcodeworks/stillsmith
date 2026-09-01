@@ -201,8 +201,13 @@ same drawing engine as the capture, so what you nudge is what ships.
 ## For agents
 
 Scenes and shots are ordinary TypeScript files, so an agent works with its
-normal file tools: edit the `*.scene.tsx`, run `stillsmith capture`, look at the
-image, refine. `stillsmith plan` is the dry run.
+normal file tools: edit the `*.scene.tsx`, run `stillsmith capture --strict`,
+look at the image, refine. `stillsmith plan` is the dry run.
+
+Use `--strict`: without it an annotation whose target selector matched nothing is
+a warning on a run that still exits 0, and the image ships with the callout
+missing. `--strict` turns those warnings into a non-zero exit, so a failed edit
+is a failed command.
 
 ## Capture
 
@@ -211,6 +216,7 @@ stillsmith plan                          # what would be captured
 stillsmith capture                       # every target
 stillsmith capture --target docs
 stillsmith capture --scene card --preset docs
+stillsmith capture --strict              # warnings become a non-zero exit
 stillsmith dev                           # browse the scenes (no authoring GUI)
 ```
 
@@ -230,3 +236,4 @@ site can enumerate screenshots instead of hardcoding filenames.
 | `--preset <names>` | Comma-separated preset names. |
 | `--tag <tags>` | Comma-separated tags. |
 | `--clean` | Delete the targeted images first. |
+| `--strict` | Exit non-zero if the run raises any warning (unresolved annotation targets, shots no target captures). |

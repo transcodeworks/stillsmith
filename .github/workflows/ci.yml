@@ -43,6 +43,10 @@ jobs:
       - run: pnpm check
       - run: pnpm typecheck
 
+      # Both packages run Chromium e2e off their own playwright dependency.
+      # Install per package: if the two ever resolve to different playwright
+      # versions, one browser build would be missing at test time.
       - run: pnpm --filter @stillsmith/capture exec playwright install --with-deps chromium
+      - run: pnpm --filter @stillsmith/studio exec playwright install --with-deps chromium
 
       - run: pnpm test

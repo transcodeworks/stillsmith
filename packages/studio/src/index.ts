@@ -40,12 +40,19 @@ export function stillsmithStudio(): Plugin {
       // The handshake: capture's plugin publishes its resolved config on `api`,
       // so studio needs no config of its own and never loads it twice.
       const host = server.config.plugins.find((p) => p.name === "stillsmith");
-      const config = (host?.api as { config?: ResolvedConfig } | undefined)?.config;
-      if (!config) {
+      if (!host) {
         throw new Error(
           "@stillsmith/studio must run on a stillsmith dev server — the stillsmith " +
             "Vite plugin was not found. Start it with `stillsmith-studio`, or add " +
             "the plugin from @stillsmith/capture/vite alongside this one.",
+        );
+      }
+      const config = (host.api as { config?: ResolvedConfig } | undefined)?.config;
+      if (!config) {
+        throw new Error(
+          "@stillsmith/studio found the stillsmith Vite plugin, but it publishes no " +
+            "resolved config on `api.config` — the installed @stillsmith/capture is " +
+            "too old for this @stillsmith/studio. Upgrade @stillsmith/capture.",
         );
       }
 

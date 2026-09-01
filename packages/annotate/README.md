@@ -12,8 +12,8 @@ This package is what they agree on: the `Target` model (how an annotation or a
 tour step points at an element — `selector` → `text` → `rect`, with `data-shot`
 attributes as the endorsed stable hook), the DOM overlay drawer
 (`drawAnnotations`), target resolution (`resolveTarget`), and target suggestion
-(`suggestTarget`, `collectAnnotatable` — turning a clicked element into the most
-stable selector available, graded `stable` / `ok` / `brittle`).
+(`suggestTarget` — turning a clicked element into the most stable selector
+available, graded `stable` / `ok` / `brittle`).
 
 It is deliberately dependency-free and browser-only: no Node, no framework, no
 Playwright. Two artifacts ship:

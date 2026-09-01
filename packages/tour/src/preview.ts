@@ -1,10 +1,11 @@
 /**
  * Static one-step preview: the authoring seam.
  *
- * The GUI's stage and the MCP `preview_step` tool render exactly what ships —
- * the same spotlight, the same tooltip — with the lifecycle stripped out: no
- * waiting, no advance triggers, no focus trap, no persistence. The buttons
- * render (they're part of the picture) but do nothing.
+ * @stillsmith/studio's stage calls this to render exactly what ships — the same
+ * spotlight, the same tooltip — with the lifecycle stripped out: no waiting, no
+ * advance triggers, no focus trap, no persistence. The buttons render (they're
+ * part of the picture) but do nothing. It is the only reason this package has a
+ * non-runtime export; nothing in the shipped tour lifecycle uses it.
  */
 import { resolveTarget } from "@stillsmith/annotate";
 import { Spotlight } from "./overlay.js";

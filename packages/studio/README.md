@@ -14,8 +14,9 @@ your `.scene.tsx` and `.tour.ts` files as a clean, reviewable diff.
 pnpm add -D @stillsmith/studio
 ```
 
-`@stillsmith/capture` must be installed alongside it (it almost certainly
-already is).
+`@stillsmith/capture` is a peer dependency and must be installed alongside it
+(it almost certainly already is) — the studio rides on the server capture runs,
+and both must be the same capture.
 
 ## Run
 

@@ -9,5 +9,5 @@
  */
 export { drawAnnotations } from "./draw.js";
 export { type ResolvedTarget, resolveTarget, resolveTargetRect } from "./resolve.js";
-export { type AnnotatableElement, collectAnnotatable, suggestTarget } from "./suggest.js";
+export { suggestTarget } from "./suggest.js";
 export type * from "./types.js";

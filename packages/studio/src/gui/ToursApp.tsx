@@ -21,6 +21,7 @@ import {
   fetchState,
   saveTour,
 } from "./api.js";
+import { tourVersionWarning } from "./tourVersion.js";
 
 function editable(tour: TourDTO["tour"]): EditableTour {
   return { steps: tour.steps, fixture: tour.fixture };
@@ -222,6 +223,7 @@ export function ToursApp({ modeToggle }: ToursAppProps) {
   }
 
   const playTour = tourDTO ? { ...tourDTO.tour, ...(draft ?? {}) } : null;
+  const versionWarning = tourVersionWarning(state.tourVersion);
 
   return (
     <div className="app">
@@ -274,6 +276,7 @@ export function ToursApp({ modeToggle }: ToursAppProps) {
           </button>
         </div>
       )}
+      {versionWarning && <div className="warnings">{versionWarning}</div>}
       {warnings.length > 0 && !playing && <div className="warnings">{warnings.join(" · ")}</div>}
 
       <Group

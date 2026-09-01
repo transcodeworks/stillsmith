@@ -2,9 +2,14 @@ import starlight from "@astrojs/starlight";
 import starlightLlmTools from "@wave-rf/starlight-llm-tools";
 import { defineConfig } from "astro/config";
 
+const base = "/stillsmith";
+
 export default defineConfig({
   site: "https://transcodeworks.github.io",
-  base: "/stillsmith",
+  base,
+  redirects: {
+    "/guides/mcp": `${base}/guides/authoring/`,
+  },
   integrations: [
     starlight({
       title: "stillsmith",

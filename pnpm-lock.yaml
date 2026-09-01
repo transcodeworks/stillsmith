@@ -435,9 +435,6 @@ importers:
       '@stillsmith/annotate':
         specifier: workspace:^
         version: link:../annotate
-      '@stillsmith/capture':
-        specifier: workspace:^
-        version: link:../capture
       '@stillsmith/tour':
         specifier: workspace:^
         version: link:../tour
@@ -448,6 +445,9 @@ importers:
         specifier: ^28.0.0
         version: 28.0.0
     devDependencies:
+      '@stillsmith/capture':
+        specifier: workspace:^
+        version: link:../capture
       '@types/node':
         specifier: ^24
         version: 24.13.3

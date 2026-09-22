@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import type { Plugin } from "vite";
 
 import { findSceneFiles } from "../core/discover.js";
-import { AUTHOR_APP_PATH, assertRuntimeBuilt, runtimePath } from "../core/paths.js";
+import { AUTHOR_APP_PATH, assertRuntimeBuilt, fsUrl, runtimePath } from "../core/paths.js";
 import type { ResolvedConfig } from "../types.js";
 import { apiMiddleware } from "./api.js";
 
@@ -10,9 +10,6 @@ const ENTRY_ID = "virtual:stillsmith/entry";
 const RESOLVED_ENTRY_ID = `\0${ENTRY_ID}`;
 /** How the browser must ask for a `\0`-prefixed virtual module. */
 const ENTRY_URL = "/@id/__x00__virtual:stillsmith/entry";
-
-/** Serve absolute on-disk paths to the browser through Vite's fs endpoint. */
-const fsUrl = (abs: string) => `/@fs${abs}`;
 
 const SHELL = `<!doctype html>
 <html>

@@ -14,13 +14,14 @@ import {
   formatPlan,
 } from "../core/plan.js";
 import { startServer } from "../core/server.js";
+import { STILLSMITH_STUDIO_PLUGIN_NAME } from "../plugin-names.js";
 import { init } from "./init.js";
 
 const USAGE = `stillsmith — screenshots from your real components
 
 Usage
   stillsmith init                  scaffold stillsmith.config.ts, a setup file, and an example scene
-  stillsmith dev                   serve the scenes for browsing
+  stillsmith dev                   serve the scenes for browsing (no authoring GUI)
   stillsmith plan [filters]        print what would be captured
   stillsmith capture [filters]     capture and write images
   stillsmith install               install the Playwright Chromium build
@@ -32,6 +33,7 @@ Filters
   --preset <names>   comma-separated preset names
   --tag <tags>       comma-separated tags
   --clean            delete the targeted images before capturing
+  --strict           exit non-zero if capture raises any warning
 
 Other
   --config <path>    path to stillsmith.config.ts
@@ -61,31 +63,37 @@ async function main(): Promise<void> {
       tag: { type: "string" },
       config: { type: "string" },
       clean: { type: "boolean", default: false },
+      strict: { type: "boolean", default: false },
       help: { type: "boolean", short: "h", default: false },
     },
   });
 
   const command = positionals[0] ?? "help";
+
   if (values.help || command === "help") {
     console.log(USAGE);
+    return;
+  }
+
+  // An old MCP client config still spawns us as `stillsmith mcp` over stdio.
+  // Answer on stderr and leave stdout untouched: anything we print there lands
+  // on the client's JSON-RPC channel as garbage.
+  if (command === "mcp") {
+    console.error(
+      "The stillsmith MCP server was removed in this version.\n\n" +
+        "Agents author scenes and tours by editing the TypeScript files directly and\n" +
+        "verifying with `stillsmith capture --strict`. Remove this server from your\n" +
+        "client config (e.g. `claude mcp remove stillsmith`).\n\n" +
+        "For the visual authoring GUI, install @stillsmith/studio and run `stillsmith-studio`.\n" +
+        "Authoring docs: https://transcodeworks.github.io/stillsmith",
+    );
+    process.exitCode = 1;
     return;
   }
 
   if (command === "init") {
     await init();
     return;
-  }
-
-  if (command === "mcp") {
-    // Loaded lazily: the MCP SDK is dead weight for every other command, and
-    // this keeps `stillsmith capture` startup lean.
-    const [{ runMcpServer }, config] = await Promise.all([
-      import("../mcp/server.js"),
-      loadConfig(values.config),
-    ]);
-    console.error(formatHostReport(config.hostReport));
-    await runMcpServer(config);
-    return; // stdio transport keeps the process alive.
   }
 
   if (command === "install") {
@@ -105,10 +113,18 @@ async function main(): Promise<void> {
   };
 
   if (command === "dev") {
-    const { baseUrl } = await startServer(config);
-    console.log(`  authoring GUI   ${baseUrl}author`);
-    console.log(`  scenes          ${baseUrl}`);
-    console.log("\nPress Ctrl-C to stop.");
+    const { server, baseUrl } = await startServer(config);
+    console.log(`  scenes   ${baseUrl}`);
+    // A config's `viteOverrides.plugins` may have mounted the studio itself, in
+    // which case the GUI is already live on this server — say where.
+    if (server.config.plugins.some((p) => p.name === STILLSMITH_STUDIO_PLUGIN_NAME)) {
+      console.log(`  author   ${baseUrl}author`);
+    } else {
+      console.log(
+        "\nFor the visual authoring GUI, install @stillsmith/studio and run `stillsmith-studio`.",
+      );
+    }
+    console.log("Press Ctrl-C to stop.");
     return; // The Vite server keeps the process alive.
   }
 
@@ -134,6 +150,18 @@ async function main(): Promise<void> {
     throw err;
   }
 
+  // What `--strict` turns into an exit code: every warning raised below, counted
+  // rather than re-read out of the text we printed. Every exit from `capture`
+  // goes through `applyStrict`, including the empty-plan one: that is the case
+  // where every shot is an orphan and nothing was captured.
+  let warned = 0;
+  const applyStrict = () => {
+    if (values.strict && warned > 0) {
+      console.error(`\n--strict: ${warned} warning(s) above.`);
+      process.exitCode = 1;
+    }
+  };
+
   const unfiltered =
     !values.target && !values.scene && !values.shot && !values.preset && !values.tag;
   if (unfiltered) {
@@ -144,6 +172,7 @@ async function main(): Promise<void> {
           orphans.map((o) => `  ${o}`).join("\n") +
           "\nTheir presets don't intersect a target's, or they lack the tag a target filters on.\n",
       );
+      warned += orphans.length;
     }
   }
 
@@ -156,6 +185,7 @@ async function main(): Promise<void> {
   if (plan.length === 0) {
     await close();
     console.log("Nothing to capture (no shots matched).");
+    applyStrict();
     return;
   }
 
@@ -166,9 +196,13 @@ async function main(): Promise<void> {
     console.log(`\nCaptured ${captured} screenshot(s) into:`);
     for (const dir of outDirs) console.log(`  ${dir}`);
     if (warnings > 0) {
-      // Loud but non-fatal: the images exist, some annotation just didn't land.
+      // Loud but non-fatal by default: the images exist, some annotation just
+      // didn't land. `--strict` is for CI and agents, where a screenshot missing
+      // its callout should stop the run rather than pass quietly.
       console.warn(`\n${warnings} annotation target(s) did not resolve (see ⚠ above).`);
+      warned += warnings;
     }
+    applyStrict();
   } finally {
     await close();
   }

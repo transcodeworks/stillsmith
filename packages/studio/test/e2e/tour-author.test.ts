@@ -4,9 +4,10 @@ import { fileURLToPath } from "node:url";
 import { type Browser, chromium } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { loadConfig } from "../../src/core/config.js";
-import { type StillsmithServer, startServer } from "../../src/core/server.js";
-import type { ResolvedConfig } from "../../src/types.js";
+import type { ResolvedConfig } from "@stillsmith/capture";
+import { loadConfig, startServer, type StillsmithServer } from "@stillsmith/capture/node";
+
+import { stillsmithStudio } from "../../src/index.js";
 
 /**
  * The authoring GUI's tour mode, end to end: switch modes, pick a target by
@@ -16,7 +17,9 @@ import type { ResolvedConfig } from "../../src/types.js";
  * iframes the consumer's own app (the middleware only claims /__stillsmith*),
  * so click-to-pick needs no extension and no scene.
  */
-const APP = fileURLToPath(new URL("../fixtures/tour-app", import.meta.url));
+// Fixtures live with capture: its remaining e2e suites use them too, and one
+// copy means one place to keep them honest.
+const APP = fileURLToPath(new URL("../../../capture/test/fixtures/tour-app", import.meta.url));
 const TOUR_FILE = path.join(APP, "src/tours/onboarding.tour.ts");
 
 let config: ResolvedConfig;
@@ -27,7 +30,7 @@ let originalSource: string;
 beforeAll(async () => {
   originalSource = await readFile(TOUR_FILE, "utf8");
   config = await loadConfig(path.join(APP, "stillsmith.config.tsx"));
-  server = await startServer(config, { hmr: false });
+  server = await startServer(config, { hmr: false, plugins: [stillsmithStudio()] });
   const executablePath = process.env.PW_CHROME;
   browser = await chromium.launch(executablePath ? { executablePath } : {});
 }, 120_000);

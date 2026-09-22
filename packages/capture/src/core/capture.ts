@@ -151,9 +151,9 @@ async function waitForImages(page: import("playwright").Page): Promise<void> {
 /**
  * Open a scene, settle it, and hand the live page to `use`.
  *
- * Every consumer goes through here — capture, the MCP `preview` tool, the MCP
- * `inspect_scene` tool — so an agent's preview is rendered by exactly the same
- * code path as the image that ships, down to the stabilisation.
+ * Every consumer goes through here, so anything previewing a scene renders by
+ * exactly the same code path as the image that ships, down to the
+ * stabilisation.
  */
 export async function withScenePage<T>(
   browser: Browser,
@@ -320,9 +320,8 @@ export interface CaptureResult {
 /**
  * Where progress goes.
  *
- * Injectable because the MCP server speaks JSON-RPC over **stdout** — anything
- * capture prints there corrupts the protocol. The CLI passes a stdout logger;
- * the MCP server passes one that writes to stderr.
+ * Injectable so callers can silence or redirect it; the e2e tests pass a
+ * no-op logger. `stillsmith capture` uses the console.
  */
 export interface Logger {
   info(line: string): void;

@@ -129,7 +129,7 @@ export interface stillsmithConfig<TNode = RenderNode> extends Setup<TNode> {
   /**
    * Globs for `*.tour.ts` files, relative to the config file. Opt-in: tours
    * are @stillsmith/tour's runtime artifact; stillsmith only *authors* them (the
-   * editor's tour mode, the codemod, the MCP tools).
+   * editor's tour mode and the codemod).
    */
   tours?: string[];
   /**

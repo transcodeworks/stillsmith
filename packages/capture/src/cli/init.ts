@@ -113,7 +113,7 @@ export async function init(): Promise<void> {
       "Next:",
       "  npx stillsmith install   # one-time: Chromium",
       "  npx stillsmith capture",
-      "  npx stillsmith dev       # authoring GUI",
+      "  npx stillsmith dev       # browse the scenes",
       "",
     ].join("\n"),
   );

@@ -30,7 +30,7 @@ import {
   type Tour,
   type TourController,
 } from "@stillsmith/tour";
-import type { Preset } from "../types.js";
+import type { Preset } from "@stillsmith/capture";
 
 const HOVER_OUTLINE = "2px solid #3b82f6";
 
@@ -143,14 +143,14 @@ export function AppStage({
     } catch {
       // Some environments throw on cross-origin access.
       onWarnings?.([
-        "appUrl is cross-origin — live step preview in the GUI needs same-origin access. Use MCP preview_step, or run the app through stillsmith's merged Vite server.",
+        "appUrl is cross-origin — live step preview in the GUI needs same-origin access. Run the app through stillsmith's merged Vite server to enable it.",
       ]);
       return;
     }
     // Browsers more often return null than throw for cross-origin frames.
     if (appUrl && (!doc || !win)) {
       onWarnings?.([
-        "appUrl is cross-origin — live step preview in the GUI needs same-origin access. Use MCP preview_step, or run the app through stillsmith's merged Vite server.",
+        "appUrl is cross-origin — live step preview in the GUI needs same-origin access. Run the app through stillsmith's merged Vite server to enable it.",
       ]);
       return;
     }

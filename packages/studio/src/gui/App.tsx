@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Group, Panel, Separator, useDefaultLayout } from "react-resizable-panels";
 
 import type { Annotation, Offset, Target } from "@stillsmith/annotate";
-import type { Shot } from "../types.js";
+import type { Shot } from "@stillsmith/capture";
 import { AnnotationFields } from "./Fields.jsx";
 import { ShotList } from "./ShotList.jsx";
 import { Stage } from "./Stage.jsx";

@@ -1,0 +1,102 @@
+---
+title: Node API
+description: The @stillsmith/capture/node entry that companion tooling builds on.
+---
+
+`@stillsmith/capture` has two import surfaces. The root entry, `@stillsmith/capture`,
+is pure types plus a few constants and is safe to import from code that also runs
+in the browser — your `stillsmith.config.tsx` loads it there. Everything that runs
+a server, reads the filesystem, or drives a browser lives behind
+`@stillsmith/capture/node`.
+
+That entry exists for **companion tooling**: packages that ride on the same dev
+server and config as capture rather than re-implementing them.
+[`@stillsmith/studio`](../../guides/authoring/) is the first — its `stillsmith-studio`
+CLI is a few lines over this API — and you can build your own the same way.
+
+```ts
+import { loadConfig, startServer } from "@stillsmith/capture/node";
+
+const config = await loadConfig();
+const { baseUrl, server, close } = await startServer(config, { plugins: [myPlugin()] });
+```
+
+## Config
+
+| Export | What it does |
+| --- | --- |
+| `loadConfig(explicitPath?)` | Finds `stillsmith.config.tsx` (or the path you pass, resolved from `cwd`), bundles it for Node, and returns a `ResolvedConfig` — presets, targets, globs, root, host detection, all resolved. |
+| `formatHostReport(report)` | The one-line summary `stillsmith dev` prints about the detected host: which Vite config or synthesis it used, where aliases came from, which shims are active. |
+
+## Server
+
+`startServer(config, options?)` starts the Vite server that is your app plus the
+stillsmith scene runtime, merging or synthesizing your Vite config the same way
+`stillsmith dev` and `capture` do. It returns a `StillsmithServer`:
+
+```ts
+interface StillsmithServer {
+  server: ViteDevServer;
+  /** Where the scene runtime lives, e.g. `http://127.0.0.1:5173/__stillsmith/`. */
+  baseUrl: string;
+  close(): Promise<void>;
+}
+```
+
+`ServerOptions`:
+
+| Option | Default | Meaning |
+| --- | --- | --- |
+| `hmr` | `true` | Live reload. `stillsmith dev` leaves it on; `capture` turns it off so a page can't navigate out from under the shutter. |
+| `plugins` | `[]` | Extra Vite plugins, appended after stillsmith's own. This is how the studio mounts its authoring GUI and save API: `startServer(config, { plugins: [stillsmithStudio()] })`. |
+
+### Finding the stillsmith plugin from yours
+
+A plugin passed through `plugins` runs on a server that already carries the
+`stillsmith` Vite plugin, which publishes its resolved config on its `api`.
+The root entry exports the handshake names so nobody hardcodes the strings:
+
+```ts
+import { STILLSMITH_PLUGIN_NAME, type StillsmithPluginApi } from "@stillsmith/capture";
+import type { Plugin } from "vite";
+
+export function myPlugin(): Plugin {
+  return {
+    name: "my-tool",
+    configureServer(server) {
+      const host = server.config.plugins.find((p) => p.name === STILLSMITH_PLUGIN_NAME);
+      const config = (host?.api as Partial<StillsmithPluginApi> | undefined)?.config;
+      if (!config) throw new Error("my-tool must run on a stillsmith dev server");
+      // …mount your middleware with `config`
+    },
+  };
+}
+```
+
+`STILLSMITH_STUDIO_PLUGIN_NAME` is the studio plugin's name, for the same lookup
+in the other direction — capture uses it to notice when the studio is already
+mounted via `viteOverrides.plugins`.
+
+## Discovery
+
+| Export | What it does |
+| --- | --- |
+| `findSceneFiles(config)` | The absolute paths matching the `scenes` globs, sorted. |
+| `findTourFiles(config)` | Same for the `tours` globs; empty when none are configured. |
+| `discoverScenes(server, config)` | Loads every scene file through the server and returns `DiscoveredScene[]`: `file`, `id`, the `scene` module default, and its resolved `shots`. |
+| `discoverTours(server, config)` | Same for tours: `DiscoveredTour[]`, each a `ResolvedTour` plus the `file` it came from. |
+
+The pieces discovery is built from are exported too, for tooling that loads
+modules its own way: `readShots(mod)` and `readTours(mod)` turn a loaded
+`SceneModule` / `TourModule` into `ResolvedShot[]` / `ResolvedTour[]`, and
+`sceneId`, `sceneIdFromFile`, `shotNameFromExport`, `tourIdFromExport`, and
+`fileStem` are the naming rules from the [scenes guide](../../guides/scenes/)
+(`card.scene.tsx` → `card`, `DocsHero` → `docs-hero`, a `default` shot drops
+the suffix).
+
+## Paths
+
+`findPackageRoot(from, name)` walks up from a directory to the nearest
+`package.json` whose `name` matches and returns that directory. Use it to find
+your own package root from bundled code, where counting `../` from
+`import.meta.url` breaks as soon as the bundler hoists a chunk.

@@ -2,7 +2,9 @@
   "$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
   "changelog": "@changesets/cli/changelog",
   "commit": false,
-  "fixed": [["@stillsmith/annotate", "@stillsmith/capture", "@stillsmith/tour"]],
+  "fixed": [
+    ["@stillsmith/annotate", "@stillsmith/capture", "@stillsmith/studio", "@stillsmith/tour"]
+  ],
   "linked": [],
   "access": "public",
   "baseBranch": "main",
@@ -14,5 +16,8 @@
     "stillsmith-fixture-tour-app",
     "stillsmith-fixture-no-vite",
     "stillsmith-fixture-next-shaped"
-  ]
+  ],
+  "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
+    "onlyUpdatePeerDependentsWhenOutOfRange": true
+  }
 }

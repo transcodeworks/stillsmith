@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import fs from "node:fs/promises";
 import type { Page } from "playwright";
 
-import type { AnnotatableElement, Annotation } from "@stillsmith/annotate";
+import type { Annotation } from "@stillsmith/annotate";
 
 /** How long to wait for the compositing frames below before giving up on them. */
 const PAINT_BACKSTOP_MS = 250;
@@ -29,27 +29,8 @@ declare global {
   interface Window {
     __stillsmithAnnotate?: {
       drawAnnotations: (annotations: Annotation[]) => string[];
-      collectAnnotatable: (doc?: Document, limit?: number) => AnnotatableElement[];
     };
   }
-}
-
-/**
- * Everything in the rendered scene an annotation could point at.
- *
- * Backs the MCP `inspect_scene` tool. An agent can't see the DOM, so left to
- * itself it invents a selector and the annotation silently fails to resolve at
- * capture; this hands it selectors that are known to exist and ranked by how
- * well they'll survive a re-render.
- */
-export async function inspectPage(page: Page, limit = 100): Promise<AnnotatableElement[]> {
-  await page.addScriptTag({ content: await loadBundle() });
-
-  return page.evaluate((n: number) => {
-    const api = window.__stillsmithAnnotate;
-    if (!api) throw new Error("stillsmith: annotation bundle did not initialise");
-    return api.collectAnnotatable(document, n);
-  }, limit);
 }
 
 /**

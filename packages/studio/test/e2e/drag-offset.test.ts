@@ -3,9 +3,10 @@ import { fileURLToPath } from "node:url";
 import { type Browser, chromium } from "playwright";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
-import { loadConfig } from "../../src/core/config.js";
-import { type StillsmithServer, startServer } from "../../src/core/server.js";
-import type { ResolvedConfig } from "../../src/types.js";
+import type { ResolvedConfig } from "@stillsmith/capture";
+import { loadConfig, startServer, type StillsmithServer } from "@stillsmith/capture/node";
+
+import { stillsmithStudio } from "../../src/index.js";
 
 /**
  * Dragging an annotation on the authoring stage to author its `offset`.
@@ -17,7 +18,9 @@ import type { ResolvedConfig } from "../../src/types.js";
  * the browser as it maps the cursor into the frame), the overlay is rebuilt on
  * every tick, and both are seams a unit test can't reach.
  */
-const APP = fileURLToPath(new URL("../fixtures/app", import.meta.url));
+// Fixtures live with capture: its remaining e2e suites use them too, and one
+// copy means one place to keep them honest.
+const APP = fileURLToPath(new URL("../../../capture/test/fixtures/app", import.meta.url));
 
 let config: ResolvedConfig;
 let server: StillsmithServer;
@@ -25,7 +28,7 @@ let browser: Browser;
 
 beforeAll(async () => {
   config = await loadConfig(path.join(APP, "stillsmith.config.tsx"));
-  server = await startServer(config, { hmr: false });
+  server = await startServer(config, { hmr: false, plugins: [stillsmithStudio()] });
   // PW_CHROME lets a sandbox with a mismatched Playwright browser point at an
   // installed Chromium; CI uses Playwright's own, exactly like the sibling suites.
   const executablePath = process.env.PW_CHROME;

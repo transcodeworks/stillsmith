@@ -22,8 +22,7 @@
     "./react": {
       "types": "./dist/react/index.d.ts",
       "import": "./dist/react/index.js"
-    },
-    "./global.js": "./dist/tour.global.js"
+    }
   },
   "files": [
     "dist"

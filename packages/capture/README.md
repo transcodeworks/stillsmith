@@ -10,8 +10,8 @@ Hand-composed mockups drift from the product and manual screenshots go stale
 silently. A scene renders the real component over fixture data, so when a prop
 changes, the scene fails to compile instead of quietly lying in your docs.
 
-> **Status: early development.** Capture, annotations, the visual authoring tool,
-> and the MCP server work end to end, but APIs may still change.
+> **Status: early development.** Capture, annotations, and the visual authoring
+> tool work end to end, but APIs may still change.
 
 ## Install
 
@@ -185,61 +185,29 @@ tail stays put).
 
 ## Authoring annotations visually
 
-```bash
-stillsmith dev     # → http://localhost:5173/__stillsmith/author
-```
-
-Pick a scene, a shot, and a preset; the scene renders live in an iframe at the
-preset's true pixel size. Click **pick** on a target and then click the element
-you mean — stillsmith infers the most stable selector it can (a `data-shot` first,
-then a stable id, then a `data-testid`, then text, and only as a last resort an
-absolute rect) and tells you how robust the choice is.
-
-**Drag to position.** Grab any annotation in the preview — a box, a callout, a
-label pin, an arrowhead — and drop it where you want it. The drag writes straight
-into that annotation's `offset`, so you fine-tune placement by eye instead of
-guessing `{ dx, dy }` and re-checking. Each kind moves the sensible thing (the
-box, the pin, or the arrowhead), and the offset fields update live.
-
-The preview is not a mock of the capture. It runs *the same drawing engine*
-against the iframe's document that runs against the page at capture time, so what
-you nudge here is what comes out of the PNG.
-
-**Save writes TypeScript back into your `.scene.tsx`.** It edits only the
-properties you actually changed, prints them compactly, and then runs your
-project's own formatter (Biome or Prettier, if you have one) — so changing one
-offset produces a one-line diff, not a reformatted file.
-
-Two limits worth knowing. A shot whose initialiser isn't an object literal (built
-by a helper call, say) is read-only — stillsmith refuses to rewrite what it can't
-understand rather than guessing. And a comment written *inside* a property that
-gets rewritten (between two annotations, for instance) is lost, because that
-property is regenerated from data; comments on the shot, the scene, and any
-untouched property survive.
-
-## For agents (MCP)
+The visual authoring studio ships separately as
+[`@stillsmith/studio`](https://www.npmjs.com/package/@stillsmith/studio):
 
 ```bash
-stillsmith mcp                                  # stdio MCP server
-claude mcp add stillsmith -- npx stillsmith mcp    # e.g. with Claude Code
+pnpm add -D @stillsmith/studio
+npx stillsmith-studio     # → http://localhost:5173/__stillsmith/author
 ```
 
-An agent already edits `*.scene.tsx` perfectly well with its normal file tools,
-so stillsmith doesn't offer tools to write shots. What an agent *can't* do is see
-the rendered scene or know what's targetable — left to itself it invents
-`target: { selector: ".card-title" }` and the annotation silently fails to
-resolve at capture. These five tools close exactly that gap:
+Pick a scene, place annotations by clicking, drag them to fine-tune their
+`offset`, and Save — the studio edits only the properties you changed in your
+`.scene.tsx`, formatted with your project's own formatter. Its preview runs the
+same drawing engine as the capture, so what you nudge is what ships.
 
-| Tool | What it gives the agent |
-| --- | --- |
-| `list_scenes` | Scenes, their shots, the presets and targets. |
-| `inspect_scene` | **The important one.** Renders the scene and returns selectors that are *known to exist*, ranked by how well they survive a re-render, with tag, role, text and rect. |
-| `preview` | Renders an **unsaved** shot passed inline and returns the PNG — so the agent can *look* before writing anything to a file. Unresolved targets come back as a loud warning, not a silent blank. |
-| `capture` | Runs the real pipeline. |
-| `plan` | Dry run. |
+## For agents
 
-That's the same loop the human authoring GUI provides — propose, render, look,
-refine — with the save step being an ordinary file edit.
+Scenes and shots are ordinary TypeScript files, so an agent works with its
+normal file tools: edit the `*.scene.tsx`, run `stillsmith capture --strict`,
+look at the image, refine. `stillsmith plan` is the dry run.
+
+Use `--strict`: without it an annotation whose target selector matched nothing is
+a warning on a run that still exits 0, and the image ships with the callout
+missing. `--strict` turns those warnings into a non-zero exit, so a failed edit
+is a failed command.
 
 ## Capture
 
@@ -248,7 +216,8 @@ stillsmith plan                          # what would be captured
 stillsmith capture                       # every target
 stillsmith capture --target docs
 stillsmith capture --scene card --preset docs
-stillsmith dev                           # browse the scenes
+stillsmith capture --strict              # warnings become a non-zero exit
+stillsmith dev                           # browse the scenes (no authoring GUI)
 ```
 
 Captures are deterministic — fonts are awaited, animations and transitions are
@@ -267,3 +236,24 @@ site can enumerate screenshots instead of hardcoding filenames.
 | `--preset <names>` | Comma-separated preset names. |
 | `--tag <tags>` | Comma-separated tags. |
 | `--clean` | Delete the targeted images first. |
+| `--strict` | Exit non-zero if the run raises any warning (unresolved annotation targets, shots no target captures). |
+
+## Node API
+
+The root entry is types plus the plugin handshake names, and is safe to import in
+the browser. Everything that runs a server or reads the filesystem is behind
+`@stillsmith/capture/node`, the surface companion tooling such as
+`@stillsmith/studio` builds on:
+
+```ts
+import { loadConfig, startServer, discoverScenes } from "@stillsmith/capture/node";
+
+const config = await loadConfig();
+const { server, baseUrl, close } = await startServer(config, { plugins: [myPlugin()] });
+const scenes = await discoverScenes(server, config);
+```
+
+`startServer` accepts `hmr` and `plugins` (extra Vite plugins appended after
+stillsmith's own). Discovery, the module readers and id helpers it is built from,
+`formatHostReport`, and `findPackageRoot` are exported alongside. See the
+[Node API reference](https://transcodeworks.github.io/stillsmith/reference/node-api/).

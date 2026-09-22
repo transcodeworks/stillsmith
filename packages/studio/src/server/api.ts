@@ -9,12 +9,16 @@
  * *already one of the discovered scene files*. There is no path to normalise and
  * no traversal to defend against — an unknown path is simply not a scene.
  */
+import fs from "node:fs/promises";
+import path from "node:path";
+
 import type { Tour } from "@stillsmith/tour";
 import type { Connect, ViteDevServer } from "vite";
 
-import { CodemodError, createShot, createTour, deleteShot, setShotProps } from "../core/codemod.js";
-import { discoverScenes, discoverTours } from "../core/discover.js";
-import type { ResolvedConfig, Shot } from "../types.js";
+import type { ResolvedConfig, Shot } from "@stillsmith/capture";
+import { discoverScenes, discoverTours } from "@stillsmith/capture/node";
+
+import { CodemodError, createShot, createTour, deleteShot, setShotProps } from "./codemod.js";
 
 type Req = Connect.IncomingMessage;
 type Res = Parameters<Connect.NextHandleFunction>[1];
@@ -51,6 +55,42 @@ export interface StateDTO {
    * tour stage loads this instead of the merged Vite server's `/`.
    */
   appUrl?: string;
+  /**
+   * The @stillsmith/tour version installed in the consumer's project, or
+   * undefined if they have none. The GUI's step preview runs its own bundled
+   * copy of the runtime; tour mode warns when the two versions disagree.
+   */
+  tourVersion?: string;
+}
+
+/**
+ * The version of @stillsmith/tour the CONSUMER installed, resolved from their
+ * config root — not ours.
+ *
+ * The GUI's step preview is the production runtime, and the GUI carries its own
+ * bundled copy of it (it is a static asset, compiled by nobody's Vite). That
+ * copy can drift from the one the consumer's app actually runs, so the GUI
+ * compares the two and says so. Undefined when the project has no
+ * @stillsmith/tour at all, which is not an error: tours are optional.
+ */
+export async function resolveTourVersion(root: string): Promise<string | undefined> {
+  // Walked by hand rather than resolved: @stillsmith/tour publishes no
+  // `./package.json` export, and its main export is `import`-only, so neither
+  // `require.resolve` nor `import.meta.resolve` (which can't be pointed at
+  // another root) can find the manifest. Node's own directory walk is the part
+  // we actually need, and it holds for npm, yarn, and pnpm alike.
+  for (let dir = root; ; dir = path.dirname(dir)) {
+    const manifest = path.join(dir, "node_modules", "@stillsmith", "tour", "package.json");
+    const raw = await fs.readFile(manifest, "utf8").catch(() => null);
+    if (raw) {
+      try {
+        return (JSON.parse(raw) as { version?: string }).version;
+      } catch {
+        return undefined;
+      }
+    }
+    if (path.dirname(dir) === dir) return undefined;
+  }
 }
 
 function sendJson(res: Res, status: number, body: unknown): void {
@@ -113,6 +153,7 @@ export function apiMiddleware(
         const state: StateDTO = {
           presets: config.presets,
           appUrl: config.appUrl,
+          tourVersion: await resolveTourVersion(config.root),
           scenes: scenes.map((s) => ({
             id: s.id,
             file: s.file,

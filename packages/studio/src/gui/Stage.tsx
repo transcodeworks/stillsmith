@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { drawAnnotations, suggestTarget } from "@stillsmith/annotate";
 import type { Annotation, Offset, Target, TargetSuggestion } from "@stillsmith/annotate";
-import type { Preset } from "../types.js";
+import type { Preset } from "@stillsmith/capture";
 
 const HOVER_OUTLINE = "2px solid #3b82f6";
 

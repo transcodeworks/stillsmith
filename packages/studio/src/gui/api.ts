@@ -1,6 +1,6 @@
 import type { Tour } from "@stillsmith/tour";
-import type { SceneDTO, StateDTO, TourDTO } from "../vite/api.js";
-import type { Shot } from "../types.js";
+import type { Shot } from "@stillsmith/capture";
+import type { SceneDTO, StateDTO, TourDTO } from "../server/api.js";
 
 const BASE = "/__stillsmith/api";
 

@@ -2,9 +2,14 @@ import starlight from "@astrojs/starlight";
 import starlightLlmTools from "@wave-rf/starlight-llm-tools";
 import { defineConfig } from "astro/config";
 
+const base = "/stillsmith";
+
 export default defineConfig({
   site: "https://transcodeworks.github.io",
-  base: "/stillsmith",
+  base,
+  redirects: {
+    "/guides/mcp": `${base}/guides/authoring/`,
+  },
   integrations: [
     starlight({
       title: "stillsmith",
@@ -33,13 +38,15 @@ export default defineConfig({
             { label: "Next.js & other hosts", slug: "guides/hosts" },
             { label: "Annotations", slug: "guides/annotations" },
             { label: "Guided tours", slug: "guides/tours" },
-            { label: "The authoring GUI", slug: "guides/authoring" },
-            { label: "Agents (MCP)", slug: "guides/mcp" },
+            { label: "The authoring studio", slug: "guides/authoring" },
           ],
         },
         {
           label: "Reference",
-          items: [{ label: "CLI", slug: "reference/cli" }],
+          items: [
+            { label: "CLI", slug: "reference/cli" },
+            { label: "Node API", slug: "reference/node-api" },
+          ],
         },
       ],
       plugins: [starlightLlmTools()],

@@ -4,10 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "build": "pnpm --filter @stillsmith/capture... build",
-    "dev": "pnpm --filter @stillsmith/capture dev",
+    "build": "pnpm --filter @stillsmith/studio... build",
+    "dev": "pnpm --parallel --filter @stillsmith/capture --filter @stillsmith/studio dev",
     "typecheck": "pnpm -r typecheck",
-    "test": "pnpm --filter @stillsmith/capture --filter @stillsmith/tour test",
+    "test": "pnpm --filter @stillsmith/capture --filter @stillsmith/tour --filter @stillsmith/studio test",
     "example": "pnpm --filter stillsmith-example-rock-app",
     "lint": "biome lint .",
     "format": "biome format --write .",

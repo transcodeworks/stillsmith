@@ -5,12 +5,23 @@ description: Every stillsmith command and flag.
 
 ```
 stillsmith init                  scaffold stillsmith.config.tsx and an example scene
-stillsmith dev                   scene browser + annotation authoring GUI
+stillsmith dev                   scene browser (no authoring GUI)
 stillsmith plan [filters]        print what would be captured
 stillsmith capture [filters]     capture and write PNGs
-stillsmith mcp                   stdio MCP server
 stillsmith install               install the Playwright Chromium build
 ```
+
+## stillsmith-studio
+
+The visual [authoring studio](../guides/authoring/) is a separate package with
+its own bin:
+
+```
+stillsmith-studio [--config <path>]   scene browser + authoring GUI + save API
+```
+
+It starts the same dev server as `stillsmith dev` with the authoring routes
+mounted, and takes only `--config`.
 
 ## Filters
 
@@ -24,6 +35,7 @@ Every filter applies to both `plan` and `capture`.
 | `--preset <names>` | Comma-separated preset names. |
 | `--tag <tags>` | Comma-separated tags. |
 | `--clean` | Delete the targeted images first. |
+| `--strict` | Exit non-zero if `capture` raises any warning. See [strict mode](#strict-mode). |
 | `--config <path>` | Path to `stillsmith.config.tsx`. |
 
 ```bash
@@ -50,6 +62,35 @@ Their presets don't intersect a target's, or they lack the tag a target filters 
 
 A shot you wrote and never get is easy to miss, so stillsmith warns rather than
 staying silent.
+
+## Strict mode
+
+By default a warning leaves `capture` exiting 0: the images exist, something just
+didn't land. `stillsmith capture --strict` turns every warning into a non-zero
+exit, closing with `--strict: N warning(s) above.` on stderr. That is what CI and
+agents want — a screenshot missing its callout should fail the run rather than
+pass quietly. Two things count as a warning:
+
+- **An annotation target that resolved to nothing.** The shot is still written,
+  without that annotation, and the run reports
+  `N annotation target(s) did not resolve`.
+- **A shot no target captures** — the orphaned shots above. Only an unfiltered
+  run counts these; with a filter you asked for a subset, so an orphan isn't news.
+  An unfiltered run whose plan is empty still fails under `--strict`, since then
+  every shot is an orphan and nothing was captured.
+
+`plan` prints the same orphan warning but always exits 0; `--strict` only changes
+the exit code of `capture`.
+
+## `stillsmith mcp` (removed)
+
+The stdio MCP server is gone. `stillsmith mcp` now exits 1 with an explanation on
+stderr and prints nothing on stdout, so an old client config that still spawns it
+gets a readable error instead of garbage on its JSON-RPC channel. Remove the
+server from your client config (for example `claude mcp remove stillsmith`).
+Agents author scenes and tours by editing the TypeScript files directly and
+verifying with `stillsmith capture --strict`; the visual GUI is
+[`stillsmith-studio`](#stillsmith-studio).
 
 ## Output
 

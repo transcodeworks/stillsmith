@@ -17,6 +17,9 @@ export default defineConfig([
   {
     entry: {
       index: "src/index.ts",
+      // The Node-side toolchain API — server, discovery, config loading — for
+      // companion packages like @stillsmith/studio.
+      node: "src/node.ts",
       // The React binding: types + defineConfig. Type-only React import, so it's
       // safe to load in Node when the config imports it.
       "react/index": "src/react/index.ts",
@@ -51,32 +54,5 @@ export default defineConfig([
     esbuildOptions(options) {
       options.jsx = "automatic";
     },
-  },
-  {
-    // The authoring GUI, bundled WITH its own React and served as a static asset.
-    // React is intentionally not external here: the consumer's Vite compiles
-    // their scenes, not our UI, and we don't want stillsmith's React in their
-    // module graph.
-    entry: { app: "src/author/main.tsx" },
-    outDir: "dist/author",
-    format: ["esm"],
-    platform: "browser",
-    target: "es2020",
-    dts: false,
-    clean: false,
-    minify: true,
-    // tsup externalises dependencies and peerDependencies by default, which for
-    // a browser bundle served straight off disk means unresolvable bare
-    // `import … from "react"`. The GUI must carry its own React (and any UI
-    // libs that depend on it), its own copy of the annotation engine, and its
-    // own tour runtime (the stage's step preview IS the runtime).
-    noExternal: [
-      "react",
-      "react-dom",
-      "react-resizable-panels",
-      "@stillsmith/annotate",
-      "@stillsmith/tour",
-      "@floating-ui/dom",
-    ],
   },
 ]);

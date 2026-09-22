@@ -3,7 +3,7 @@
  *
  * The scenes photograph the components with fixture props; this entry wires
  * the same components up with state and two hand-rolled routes, and mounts
- * the onboarding tour. `stillsmith dev` serves this at `/` and the authoring
+ * the onboarding tour. `stillsmith-studio` serves this at `/` and the authoring
  * GUI at `/__stillsmith/author`, so the tours mode edits this very app.
  */
 import { registerTourFixtures, startTour } from "@stillsmith/tour";

@@ -3,8 +3,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { CodemodError, createTour, deleteShot, setShotProps } from "../../src/core/codemod.js";
-import { readTours, tourIdFromExport } from "../../src/tour-utils.js";
+import { readTours, tourIdFromExport } from "@stillsmith/capture/node";
+
+import { CodemodError, createTour, deleteShot, setShotProps } from "../../src/server/codemod.js";
 
 /**
  * Tours round-trip through the same codemod as shots — that reuse is the

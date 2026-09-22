@@ -9,7 +9,10 @@
 import { existsSync } from "node:fs";
 import path from "node:path";
 import type { InlineConfig } from "vite";
-import { ts } from "ts-morph";
+// Only the compiler API: tsconfig parsing with correct `extends` resolution.
+// (This used to come via ts-morph, which just re-exports the same compiler;
+// the codemod that needed real ts-morph now lives in @stillsmith/studio.)
+import ts from "typescript";
 
 import type { AliasEntry } from "./load-module.js";
 import { loadVite } from "./engine.js";

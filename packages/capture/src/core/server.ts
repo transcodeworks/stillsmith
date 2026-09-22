@@ -32,6 +32,9 @@ export interface ServerOptions {
   /** Live-reload. On for `stillsmith dev`; off for capture, which wants a page that
    * cannot navigate out from under the shutter. */
   hmr?: boolean;
+  /** Extra Vite plugins appended after stillsmith's own — e.g. @stillsmith/studio's
+   * authoring middleware. */
+  plugins?: Plugin[];
 }
 
 async function resolveBaseConfig(config: ResolvedConfig): Promise<InlineConfig> {
@@ -53,7 +56,7 @@ function shimPlugins(config: ResolvedConfig): Plugin[] {
 
 export async function startServer(
   config: ResolvedConfig,
-  { hmr = true }: ServerOptions = {},
+  { hmr = true, plugins = [] }: ServerOptions = {},
 ): Promise<StillsmithServer> {
   const vite = await loadVite(config.root);
   const base = await resolveBaseConfig(config);
@@ -77,7 +80,7 @@ export async function startServer(
       // We already loaded it by hand; don't let Vite load it a second time.
       configFile: false,
       root: appRoot,
-      plugins: [...shimPlugins(config), stillsmith(config)],
+      plugins: [...shimPlugins(config), stillsmith(config), ...plugins],
       // Scenes import the app's components, which import React from the app's
       // node_modules. One React instance or hooks cross streams.
       resolve: { dedupe: ["react", "react-dom"] },

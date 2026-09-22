@@ -1,5 +1,5 @@
 ---
-title: The authoring GUI
+title: The authoring studio
 description: Place annotations visually. Save writes TypeScript back into your scene file.
 ---
 
@@ -7,8 +7,13 @@ import { Aside } from '@astrojs/starlight/components';
 import { Image } from 'astro:assets';
 import gui from '../../../assets/shots/stillsmith-authoring-docs.webp';
 
+The authoring GUI ships as its own package, `@stillsmith/studio` — capture
+stays a lean dev dependency, and the studio comes along only where a human
+authors visually.
+
 ```bash
-stillsmith dev
+pnpm add -D @stillsmith/studio
+npx stillsmith-studio
 ```
 
 | | |

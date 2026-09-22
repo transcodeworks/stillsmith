@@ -35,6 +35,10 @@ that touches only the properties you changed, formatted with your project's own
 formatter. With `tours` globs configured, a second mode authors
 [`@stillsmith/tour`](../tour) files the same way, against your live app.
 
+The GUI is a prebuilt static asset, so its tour step preview runs the copy of
+`@stillsmith/tour` bundled into the studio, while your app runs the version it
+installs. Tour mode warns when the two disagree; align the versions to clear it.
+
 ## As a Vite plugin
 
 The CLI is a thin wrapper. If you start the server yourself (or want the

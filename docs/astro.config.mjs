@@ -43,7 +43,10 @@ export default defineConfig({
         },
         {
           label: "Reference",
-          items: [{ label: "CLI", slug: "reference/cli" }],
+          items: [
+            { label: "CLI", slug: "reference/cli" },
+            { label: "Node API", slug: "reference/node-api" },
+          ],
         },
       ],
       plugins: [starlightLlmTools()],

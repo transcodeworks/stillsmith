@@ -237,3 +237,23 @@ site can enumerate screenshots instead of hardcoding filenames.
 | `--tag <tags>` | Comma-separated tags. |
 | `--clean` | Delete the targeted images first. |
 | `--strict` | Exit non-zero if the run raises any warning (unresolved annotation targets, shots no target captures). |
+
+## Node API
+
+The root entry is types plus the plugin handshake names, and is safe to import in
+the browser. Everything that runs a server or reads the filesystem is behind
+`@stillsmith/capture/node`, the surface companion tooling such as
+`@stillsmith/studio` builds on:
+
+```ts
+import { loadConfig, startServer, discoverScenes } from "@stillsmith/capture/node";
+
+const config = await loadConfig();
+const { server, baseUrl, close } = await startServer(config, { plugins: [myPlugin()] });
+const scenes = await discoverScenes(server, config);
+```
+
+`startServer` accepts `hmr` and `plugins` (extra Vite plugins appended after
+stillsmith's own). Discovery, the module readers and id helpers it is built from,
+`formatHostReport`, and `findPackageRoot` are exported alongside. See the
+[Node API reference](https://transcodeworks.github.io/stillsmith/reference/node-api/).

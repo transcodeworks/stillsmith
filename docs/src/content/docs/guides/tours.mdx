@@ -11,13 +11,15 @@ the repo, and it can't quietly rot. Steps anchor to elements with the same
 they tour, and ship in the same PR as the UI change that would otherwise break
 them.
 
-Two packages split the work:
+Three packages split the work:
 
 - **`@stillsmith/tour`** is the production runtime: small, framework-neutral, two
   dependencies. This is what your app installs and ships.
-- **`@stillsmith/capture`** is the dev dependency you already have. It authors tours,
-  providing the editor's tours mode and the codemod that writes your `.tour.ts`
-  back.
+- **`@stillsmith/capture`** is the dev dependency you already have. It discovers
+  `.tour.ts` files from the `tours` globs and runs the dev server the studio
+  rides on.
+- **`@stillsmith/studio`** authors tours: the editor's tours mode and the codemod
+  that writes your `.tour.ts` back.
 
 ## Declaring a tour
 
@@ -134,10 +136,9 @@ and takes precedence over the registry:
 startTour(Onboarding, { fixtures: { "demo-rocks": { setup } } });
 ```
 
-The authoring GUI and the MCP `preview_step` / `inspect_app` tools apply the
-fixture too, so elements that only exist once data is present are targetable
-while you author. In the GUI the seed stays until you reload the frame or switch
-tours; a play-through seeds and cleans up on its own.
+The authoring GUI applies the fixture too, so elements that only exist once
+data is present are targetable while you author. The seed stays until you reload
+the frame or switch tours; a play-through seeds and cleans up on its own.
 
 ## Authoring visually
 
@@ -158,6 +159,12 @@ it (the same suggestion engine grades how stable the selector is), drag the card
 to nudge its `offset`, or press play to run the real tour in the frame.
 Rehearsals run with persistence off, so they never mark the real tour completed.
 
+<Aside type="note" title="Two copies of the runtime">
+The studio's step preview runs the copy of `@stillsmith/tour` bundled into the
+studio, while your app runs the version it installs. Tour mode warns when the two
+disagree; align the versions to clear it.
+</Aside>
+
 Save writes your `.tour.ts` back through the same codemod that writes shots: only
 the `steps` and `fixture` properties are touched, minimal diff, your formatter.
 
@@ -177,3 +184,4 @@ browser forbids reaching into the frame.
 
 A tour is a plain `.tour.ts` file, so an agent authors and edits tours with its
 normal file tools — the same selectors and stability rules in this guide apply.
+There is no MCP server.

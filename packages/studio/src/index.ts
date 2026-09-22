@@ -11,14 +11,18 @@
  * the browser*. Everything Node-flavoured (fs reads, ts-morph via the API) is
  * loaded dynamically inside `configureServer`, which only ever runs in Node.
  */
-import type { ResolvedConfig } from "@stillsmith/capture";
+import {
+  STILLSMITH_PLUGIN_NAME,
+  STILLSMITH_STUDIO_PLUGIN_NAME,
+  type StillsmithPluginApi,
+} from "@stillsmith/capture";
 import type { Plugin } from "vite";
 
 export type { SceneDTO, ShotDTO, StateDTO, TourDTO } from "./server/api.js";
 
 export function stillsmithStudio(): Plugin {
   return {
-    name: "stillsmith:studio",
+    name: STILLSMITH_STUDIO_PLUGIN_NAME,
     apply: "serve",
 
     // Allow-list studio's own package root, mirroring what capture does for
@@ -39,7 +43,7 @@ export function stillsmithStudio(): Plugin {
 
       // The handshake: capture's plugin publishes its resolved config on `api`,
       // so studio needs no config of its own and never loads it twice.
-      const host = server.config.plugins.find((p) => p.name === "stillsmith");
+      const host = server.config.plugins.find((p) => p.name === STILLSMITH_PLUGIN_NAME);
       if (!host) {
         throw new Error(
           "@stillsmith/studio must run on a stillsmith dev server — the stillsmith " +
@@ -47,7 +51,7 @@ export function stillsmithStudio(): Plugin {
             "the plugin from @stillsmith/capture/vite alongside this one.",
         );
       }
-      const config = (host.api as { config?: ResolvedConfig } | undefined)?.config;
+      const config = (host.api as Partial<StillsmithPluginApi> | undefined)?.config;
       if (!config) {
         throw new Error(
           "@stillsmith/studio found the stillsmith Vite plugin, but it publishes no " +

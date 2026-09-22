@@ -3,27 +3,29 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Locate stillsmith's own package root.
+ * Locate the root of the package named `name`, walking up from `from`.
  *
- * We can't derive it from `import.meta.url` by counting `../` — the bundler is
- * free to hoist this code into a shared chunk at any depth, and it does. So walk
- * up to the nearest `package.json` that actually says it's us.
+ * A package can't derive its own root from `import.meta.url` by counting `../`
+ * — the bundler is free to hoist that code into a shared chunk at any depth,
+ * and it does. So walk up to the nearest `package.json` that actually says
+ * it's the package we want. Shared with companion packages (@stillsmith/studio)
+ * that face the same problem.
  */
-function findPackageRoot(from: string): string {
+export function findPackageRoot(from: string, name: string): string {
   let dir = from;
   for (;;) {
     const manifest = path.join(dir, "package.json");
     if (existsSync(manifest)) {
       try {
-        const { name } = JSON.parse(readFileSync(manifest, "utf8")) as { name?: string };
-        if (name === "@stillsmith/capture") return dir;
+        const parsed = JSON.parse(readFileSync(manifest, "utf8")) as { name?: string };
+        if (parsed.name === name) return dir;
       } catch {
         // Unparseable package.json on the way up — keep walking.
       }
     }
     const parent = path.dirname(dir);
     if (parent === dir) {
-      throw new Error(`Could not locate the stillsmith package root from ${from}`);
+      throw new Error(`Could not locate the ${name} package root from ${from}`);
     }
     dir = parent;
   }
@@ -31,7 +33,10 @@ function findPackageRoot(from: string): string {
 
 /** Absolute path to the installed stillsmith package. Vite must allow-list this:
  * under pnpm it's a symlink into the store, far outside the project tree. */
-export const PACKAGE_ROOT = findPackageRoot(path.dirname(fileURLToPath(import.meta.url)));
+export const PACKAGE_ROOT = findPackageRoot(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "@stillsmith/capture",
+);
 
 /**
  * The renderer that mounts scenes, served to the page through Vite's /@fs.

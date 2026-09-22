@@ -17,6 +17,12 @@ export function defineConfig<TNode>(config: stillsmithConfig<TNode>): stillsmith
   return config;
 }
 
+export {
+  STILLSMITH_PLUGIN_NAME,
+  STILLSMITH_STUDIO_PLUGIN_NAME,
+  type StillsmithPluginApi,
+} from "./plugin-names.js";
+
 export type {
   Host,
   HostName,

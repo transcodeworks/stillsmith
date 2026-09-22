@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { findPackageRoot } from "@stillsmith/capture/node";
 import { defineConfig } from "tsup";
 
 /**
@@ -11,22 +12,15 @@ import { defineConfig } from "tsup";
  */
 function bundledTourVersion(): string {
   // `package.json` is not in the package's `exports`: resolve the entry and
-  // walk up to the manifest beside its dist.
+  // walk up to the manifest beside its dist. (@stillsmith/capture is built
+  // before studio — it's a devDependency — so its node entry is available here.)
   const entry = fileURLToPath(import.meta.resolve("@stillsmith/tour"));
-  for (let dir = path.dirname(entry); ; dir = path.dirname(dir)) {
-    try {
-      const manifest = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")) as {
-        name?: string;
-        version?: string;
-      };
-      if (manifest.name === "@stillsmith/tour" && manifest.version) return manifest.version;
-    } catch {
-      // No manifest here (or an unreadable one) — keep walking up.
-    }
-    if (path.dirname(dir) === dir) {
-      throw new Error("Could not read the version of the bundled @stillsmith/tour");
-    }
-  }
+  const root = findPackageRoot(path.dirname(entry), "@stillsmith/tour");
+  const { version } = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")) as {
+    version?: string;
+  };
+  if (!version) throw new Error("Could not read the version of the bundled @stillsmith/tour");
+  return version;
 }
 
 export default defineConfig([

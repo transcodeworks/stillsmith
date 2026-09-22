@@ -2,6 +2,7 @@ import type { Plugin } from "vite";
 
 import { findSceneFiles } from "../core/discover.js";
 import { assertRuntimeBuilt, fsUrl, runtimePath } from "../core/paths.js";
+import { STILLSMITH_PLUGIN_NAME, type StillsmithPluginApi } from "../plugin-names.js";
 import type { ResolvedConfig } from "../types.js";
 
 const ENTRY_ID = "virtual:stillsmith/entry";
@@ -30,13 +31,13 @@ export function stillsmith(config: ResolvedConfig): Plugin {
   let sceneFiles: string[] = [];
 
   return {
-    name: "stillsmith",
+    name: STILLSMITH_PLUGIN_NAME,
     apply: "serve",
 
     // Vite's inter-plugin handshake: companion plugins (@stillsmith/studio) find
     // this plugin by name and read the resolved config here, so they take no
     // config of their own and never load it twice.
-    api: { config },
+    api: { config } satisfies StillsmithPluginApi,
 
     async buildStart() {
       assertRuntimeBuilt(config.framework);

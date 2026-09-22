@@ -22,6 +22,7 @@ export {
   type DiscoveredTour,
 } from "./core/discover.js";
 export { formatHostReport } from "./core/host.js";
+export { findPackageRoot } from "./core/paths.js";
 export {
   fileStem,
   readShots,

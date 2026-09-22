@@ -73,7 +73,7 @@ export interface StateDTO {
  * compares the two and says so. Undefined when the project has no
  * @stillsmith/tour at all, which is not an error: tours are optional.
  */
-async function resolveTourVersion(root: string): Promise<string | undefined> {
+export async function resolveTourVersion(root: string): Promise<string | undefined> {
   // Walked by hand rather than resolved: @stillsmith/tour publishes no
   // `./package.json` export, and its main export is `import`-only, so neither
   // `require.resolve` nor `import.meta.resolve` (which can't be pointed at

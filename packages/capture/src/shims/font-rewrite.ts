@@ -9,6 +9,8 @@ import fs from "node:fs";
 import type { Plugin as EsbuildPlugin } from "esbuild";
 import type { Plugin as VitePlugin } from "vite";
 
+import { fsUrl } from "../core/paths.js";
+
 export const NEXT_FONT_GOOGLE = "next/font/google";
 
 const IMPORT_RE = /import\s*\{([^}]+)\}\s*from\s*(['"])next\/font\/google\2/g;
@@ -50,7 +52,7 @@ function loaderFor(file: string): "ts" | "tsx" | "js" | "jsx" {
 
 /** Browser pipeline — only attach when `next/font/google` is an active shim. */
 export function nextFontGoogleVitePlugin(shimPath: string): VitePlugin {
-  const href = `/@fs${shimPath}`;
+  const href = fsUrl(shimPath);
   return {
     name: "stillsmith:next-font-google",
     enforce: "pre",

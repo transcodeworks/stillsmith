@@ -45,6 +45,20 @@ export function runtimePath(framework: string): string {
   return path.join(PACKAGE_ROOT, "dist", framework, "runtime.js");
 }
 
+/**
+ * Serve an absolute on-disk path to the browser through Vite's `/@fs/` endpoint.
+ *
+ * Vite wants `/@fs/` followed by the path with forward slashes and no leading
+ * slash: `/@fs/home/u/x.tsx`, `/@fs/D:/work/x.tsx`. A bare `` `/@fs${abs}` ``
+ * only works on POSIX, where `abs` happens to start with `/`; on Windows it
+ * produced `/@fsD:\work\x.tsx`, which Vite answers with a 500 for the entry
+ * module, so no scene page could load. UNC roots (`\\server\share`) are not
+ * handled deliberately — Vite's own handling of them is not settled either.
+ */
+export function fsUrl(abs: string): string {
+  return `/@fs/${abs.replace(/\\/g, "/").replace(/^\/+/, "")}`;
+}
+
 /** The prebuilt authoring GUI, served as a static asset by the dev server. */
 export const AUTHOR_APP_PATH = path.join(PACKAGE_ROOT, "dist", "author", "app.js");
 

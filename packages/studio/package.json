@@ -1,6 +1,6 @@
 {
   "name": "@stillsmith/studio",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "The visual authoring studio for stillsmith: a dev-server GUI that edits shots and tours and writes them back into your TypeScript source.",
   "license": "MIT",
   "repository": {

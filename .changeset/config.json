@@ -16,5 +16,8 @@
     "stillsmith-fixture-tour-app",
     "stillsmith-fixture-no-vite",
     "stillsmith-fixture-next-shaped"
-  ]
+  ],
+  "___experimentalUnsafeOptions_WILL_CHANGE_IN_PATCH": {
+    "onlyUpdatePeerDependentsWhenOutOfRange": true
+  }
 }

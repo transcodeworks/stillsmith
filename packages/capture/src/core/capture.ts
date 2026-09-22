@@ -320,8 +320,8 @@ export interface CaptureResult {
 /**
  * Where progress goes.
  *
- * Injectable so an embedder whose stdout carries a protocol can route capture's
- * progress to stderr instead. The CLI passes a stdout logger.
+ * Injectable so callers can silence or redirect it; the e2e tests pass a
+ * no-op logger. `stillsmith capture` uses the console.
  */
 export interface Logger {
   info(line: string): void;

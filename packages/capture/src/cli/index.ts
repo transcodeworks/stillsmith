@@ -14,6 +14,7 @@ import {
   formatPlan,
 } from "../core/plan.js";
 import { startServer } from "../core/server.js";
+import { STILLSMITH_STUDIO_PLUGIN_NAME } from "../plugin-names.js";
 import { init } from "./init.js";
 
 const USAGE = `stillsmith — screenshots from your real components
@@ -69,6 +70,11 @@ async function main(): Promise<void> {
 
   const command = positionals[0] ?? "help";
 
+  if (values.help || command === "help") {
+    console.log(USAGE);
+    return;
+  }
+
   // An old MCP client config still spawns us as `stillsmith mcp` over stdio.
   // Answer on stderr and leave stdout untouched: anything we print there lands
   // on the client's JSON-RPC channel as garbage.
@@ -82,11 +88,6 @@ async function main(): Promise<void> {
         "Authoring docs: https://transcodeworks.github.io/stillsmith",
     );
     process.exitCode = 1;
-    return;
-  }
-
-  if (values.help || command === "help") {
-    console.log(USAGE);
     return;
   }
 
@@ -116,7 +117,7 @@ async function main(): Promise<void> {
     console.log(`  scenes   ${baseUrl}`);
     // A config's `viteOverrides.plugins` may have mounted the studio itself, in
     // which case the GUI is already live on this server — say where.
-    if (server.config.plugins.some((p) => p.name === "stillsmith:studio")) {
+    if (server.config.plugins.some((p) => p.name === STILLSMITH_STUDIO_PLUGIN_NAME)) {
       console.log(`  author   ${baseUrl}author`);
     } else {
       console.log(
@@ -150,8 +151,16 @@ async function main(): Promise<void> {
   }
 
   // What `--strict` turns into an exit code: every warning raised below, counted
-  // rather than re-read out of the text we printed.
+  // rather than re-read out of the text we printed. Every exit from `capture`
+  // goes through `applyStrict`, including the empty-plan one: that is the case
+  // where every shot is an orphan and nothing was captured.
   let warned = 0;
+  const applyStrict = () => {
+    if (values.strict && warned > 0) {
+      console.error(`\n--strict: ${warned} warning(s) above.`);
+      process.exitCode = 1;
+    }
+  };
 
   const unfiltered =
     !values.target && !values.scene && !values.shot && !values.preset && !values.tag;
@@ -176,6 +185,7 @@ async function main(): Promise<void> {
   if (plan.length === 0) {
     await close();
     console.log("Nothing to capture (no shots matched).");
+    applyStrict();
     return;
   }
 
@@ -192,10 +202,7 @@ async function main(): Promise<void> {
       console.warn(`\n${warnings} annotation target(s) did not resolve (see ⚠ above).`);
       warned += warnings;
     }
-    if (values.strict && warned > 0) {
-      console.error(`\n--strict: ${warned} warning(s) above.`);
-      process.exitCode = 1;
-    }
+    applyStrict();
   } finally {
     await close();
   }
